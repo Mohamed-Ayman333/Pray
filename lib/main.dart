@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'view/HomePage.dart';
+import 'view/home_page.dart';
 
 void main() {
   runApp(const PrayApp());
