@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'Style.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
@@ -12,8 +13,21 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
-  int gridWidth = 1;
-
+ List<Text> times = [
+   Text('date'),
+   Text('hi0'),
+   Text('hi1'),
+   Text('hi2'),
+   Text('hi3'),
+   Text('hi4'),
+   Text('hi5'),
+   Text('hi5'),
+   Text('hi5'),
+   Text('hi5'),
+   Text('hi5'),
+   Text('hi5'),
+   Text('hi5'),
+ ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,45 +47,65 @@ class _HomePageState extends State<HomePage> {
         child:Column(
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextButton(
-                  onPressed: ()=>{},
-                  child: Text('Today'),
+                Expanded(
+                    child:TextButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateColor.fromMap(primaryButtonStyle),
+                      ),
+                      child: Text('Today'),
+                    ),
                 ),
-                TextButton(
-                  onPressed: ()=>{},
-                  child: Text('30 Days')
+                Expanded(
+                    child: TextButton(
+                        onPressed: () {},
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateColor.fromMap(primaryButtonStyle),                    ),
+                        child: Text('30 Days')
+                    ),
                 ),
               ],
             ),
             SizedBox(
-              height: 120,
+              height: 230,
               child: Row(
-                spacing: 30,
+                spacing: 10,
                 children: [
-                  Column(
-                    children: [
-                      Text('Alfajr'),
-                      Text('Alshroq'),
-                      Text('Alzohr'),
-                      Text('Alasr'),
-                      Text('Almagreb'),
-                      Text('Alesha'),
-                    ],
+                  Container(
+                    color: Colors.teal[400],
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
+                    child: Column(
+                      spacing: 10,
+                      children: [
+                        Text('Prayer'),
+                        Text('Alfajr'),
+                        Text('Alshroq'),
+                        Text('Alzohr'),
+                        Text('Alasr'),
+                        Text('Almagreb'),
+                        Text('Alesha'),
+                      ],
+                    ),
                   ),
                   Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 6,
-                      scrollDirection: Axis.horizontal,
-                      mainAxisSpacing: 10,
-                      children: [
-                        Text('hi0'),
-                        Text('hi1'),
-                        Text('hi2'),
-                        Text('hi3'),
-                        Text('hi4'),
-                        Text('hi5'),
-                      ],
+                    child: Container(
+                      color: Colors.green,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      margin: EdgeInsets.all(0),
+                      child: GridView.count(
+                        crossAxisCount: 7,
+                        scrollDirection: Axis.horizontal,
+                        mainAxisSpacing: 10,
+                        children: times,
+                      ),
                     ),
                   ),
                 ],
