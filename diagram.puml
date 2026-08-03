@@ -1,0 +1,184 @@
+@startuml class_diagram
+
+package model {
+
+    package type {
+
+        class Day {
+            +date: DateTime
+            +prayers: List<Prayer>
+
+            +getCompletedPrayers(): List<Prayer>
+            +getPendingPrayers(): List<Prayer>
+            +toJson(): Map<String, dynamic>
+            +fromJson(json: Map<String, dynamic>): Day
+            +copyWith(date: DateTime?, prayers: List<Prayer>?): Day
+        }
+
+        class Prayer {
+            +name: String
+            +time: DateTime
+            +isDone: bool
+
+            +toJson(): Map<String, dynamic>
+            +fromJson(json: Map<String, dynamic>): Prayer
+            +copyWith(name: String?, time: DateTime?, isDone: bool?): Prayer
+        }
+
+        class Settings {
+            +darkMode: bool
+            +notifications: bool
+            +reminderOffsetinMinutes: int
+            +stickyNotifications: bool
+            +autoIncrementOptionalPrayerCounterBy: int
+
+            +toJson(): Map<String, dynamic>
+            +fromJson(json: Map<String, dynamic>): Settings
+            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?): Settings
+        }
+
+        class UserState {
+            +optionalPrayerCounter: int
+
+            +toJson(): Map<String, dynamic>
+            +fromJson(json: Map<String, dynamic>): UserState
+            +incrementOptionalPrayerCounter(): UserState
+            +decrementOptionalPrayerCounter(): UserState
+            +copyWith(optionalPrayerCounter: int?): UserState
+        }
+
+        Day "1" *-- "many" Prayer
+    }
+
+    package storage {
+
+        interface IDaysStorage {
+            +save(day: Day): void
+            +load(date: DateTime): Day
+        }
+
+        class LocalDaysStorage implements IDaysStorage {
+            +save(day: Day): void
+            +load(date: DateTime): Day
+        }
+
+        class OnlineDaysStorage implements IDaysStorage {
+            +save(day: Day): void
+            +load(date: DateTime): Day
+        }
+
+        class DaysRepository implements IDaysStorage {
+            -localStorage: IDaysStorage
+            -onlineStorage: IDaysStorage
+
+            +save(day: Day): void
+            +load(date: DateTime): Day
+            +getInRange(startDate: DateTime, endDate: DateTime): List<Day>
+        }
+
+        class SettingsStorage {
+            +save(settings: Settings): void
+            +load(): Settings
+        }
+
+        class SettingsRepository {
+            -settingsStorage: SettingsStorage
+
+            +save(settings: Settings): void
+            +load(): Settings
+        }
+
+        class UserStateStorage {
+            +save(userState: UserState): void
+            +load(): UserState
+        }
+
+        class UserStateRepository {
+            -userStateStorage: UserStateStorage
+
+            +save(userState: UserState): void
+            +load(): UserState
+        }
+
+        DaysRepository --> "2" IDaysStorage
+        SettingsRepository --> SettingsStorage
+        UserStateRepository --> UserStateStorage
+
+    }
+
+}
+
+package controller {
+
+    class SettingsController {
+        -settingsRepository: SettingsRepository
+        -currentSettings: Settings
+
+        +getSettings(): Settings
+        +toggleDarkMode(enabled: bool): void
+        +toggleNotifications(enabled: bool): void
+        +updateReminderOffset(minutes: int): void
+        +toggleStickyNotifications(enabled: bool): void
+        +updateAutoIncrementOptionalPrayerCounterBy(value: int): void
+    }
+
+    class UserStateController {
+        -userStateRepository: UserStateRepository
+        -currentUserState: UserState
+
+        +getUserState(): UserState
+        +incrementOptionalPrayer(): void
+        +decrementOptionalPrayer(): void
+    }
+
+    class DaysController {
+        -daysRepository: DaysRepository
+        -loadedDays: Map<DateTime, Day>
+
+        +loadDay(date: DateTime): void
+        +loadDaysInRange(startDate: DateTime, endDate: DateTime): void
+        +getDay(date: DateTime): Day?
+        +togglePrayer(date: DateTime, prayerName: String): void
+    }
+
+    SettingsController --> SettingsRepository
+    SettingsController --> Settings
+    UserStateController --> UserStateRepository
+    UserStateController --> UserState
+    DaysController --> DaysRepository
+    DaysController --> "many" Day
+    
+}
+
+package view {
+
+    class MainApp {
+        -settingsController: SettingsController
+        +build(): Widget
+    }
+
+    class HomePage {
+        -daysController: DaysController
+        -userStateController: UserStateController
+        build(): Widget
+    }
+
+    class SettingsPage {
+        -settingsController: SettingsController
+        build(): Widget
+    }
+
+    class CalendarPage {
+        -daysController: DaysController
+        build(): Widget
+    }
+
+    MainApp --> SettingsController
+    HomePage ..> DaysController : <<uses>>
+    HomePage ..> UserStateController : <<uses>>
+    SettingsPage ..> SettingsController : <<uses>>
+    CalendarPage ..> DaysController : <<uses>>
+
+}
+
+@enduml
