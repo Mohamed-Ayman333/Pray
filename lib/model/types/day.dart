@@ -21,6 +21,12 @@ class Day {
     };
   }
 
+  Day copyWith({ DateTime? date, List<Prayer>? prayers}){
+    return Day(date: date??this.date,
+    prayers: prayers??this.prayers);
+  }
 
+  List<Prayer> get completedPrayers => prayers.where((p)=>p.isDone).toList();
+  List<Prayer> get pendingPrayers => prayers.where((p)=>!p.isDone).toList();
 
 }

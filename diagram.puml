@@ -8,10 +8,10 @@ package model {
             +date: DateTime
             +prayers: List<Prayer>
 
-            +getCompletedPrayers(): List<Prayer>
-            +getPendingPrayers(): List<Prayer>
+            + <<get>> completedPrayers: List<Prayer>
+            + <<get>> pendingPrayers: List<Prayer>
             +toJson(): Map<String, dynamic>
-            +fromJson(json: Map<String, dynamic>): Day
+            +Day.fromJson(json: Map<String, dynamic>): Day
             +copyWith(date: DateTime?, prayers: List<Prayer>?): Day
         }
 
@@ -21,10 +21,10 @@ package model {
             +isDone: bool
 
             +toJson(): Map<String, dynamic>
-            +fromJson(json: Map<String, dynamic>): Prayer
+            +Prayer.fromJson(json: Map<String, dynamic>): Prayer
             +copyWith(name: String?, time: DateTime?, isDone: bool?): Prayer
         }
-        
+
         enum Language {
             EN
             AR
@@ -40,7 +40,7 @@ package model {
             language: Language
 
             +toJson(): Map<String, dynamic>
-            +fromJson(json: Map<String, dynamic>): Settings
+            +Settings.fromJson(json: Map<String, dynamic>): Settings
             +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, Azan: bool?): Settings
         }
 
@@ -48,7 +48,7 @@ package model {
             +optionalPrayerCounter: int
 
             +toJson(): Map<String, dynamic>
-            +fromJson(json: Map<String, dynamic>): UserState
+            +UserState.fromJson(json: Map<String, dynamic>): UserState
             +incrementOptionalPrayerCounter(): UserState
             +decrementOptionalPrayerCounter(): UserState
             +copyWith(optionalPrayerCounter: int?): UserState
