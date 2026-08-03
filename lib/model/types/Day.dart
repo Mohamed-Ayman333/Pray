@@ -2,12 +2,11 @@ import 'package:pray/model/types/Prayer.dart';
 
 class Day {
   //will think if it should stay a string or become a date type
-  String _date;
-  List<Prayer> _prayers;
+  final DateTime date;
+  final List<Prayer> prayers;
 
-  Day(this._date, this._prayers);
+  Day(this.date, this.prayers);
 
-  List<Prayer> get prayers => _prayers;
-  String get date => _date;
+
 
 }
