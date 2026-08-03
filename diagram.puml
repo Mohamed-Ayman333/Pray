@@ -33,15 +33,15 @@ package model {
         class Settings {
             +darkMode: bool
             +notifications: bool
-            +reminderOffsetinMinutes: int
+            +reminderOffsetInMinutes: int
             +stickyNotifications: bool
             +autoIncrementOptionalPrayerCounterBy: int
-            +Azan: bool
-            language: Language
+            +azan: bool
+            +language: Language
 
             +toJson(): Map<String, dynamic>
             +Settings.fromJson(json: Map<String, dynamic>): Settings
-            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, Azan: bool?): Settings
+            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, azan: bool?, language: Language?): Settings
         }
 
         class UserState {

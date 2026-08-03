@@ -1,1 +1,1 @@
-enum Language { AR, EN }
+enum Language { ar, en }
