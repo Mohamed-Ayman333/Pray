@@ -160,14 +160,17 @@ package view {
     class HomePage {
         -daysController: DaysController
         -userStateController: UserStateController
+        build(): Widget
     }
 
     class SettingsPage {
         -settingsController: SettingsController
+        build(): Widget
     }
 
     class CalendarPage {
         -daysController: DaysController
+        build(): Widget
     }
 
     MainApp --> SettingsController
