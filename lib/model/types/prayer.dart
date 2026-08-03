@@ -7,16 +7,16 @@ class Prayer {
 
   Map<String, dynamic> toJson() {
     return {
-      "name":name,
-      "time":time,
-      "isDone":isDone,
+      'name':name,
+      'time':time.toIso8601String(),
+      'isDone':isDone,
     };
   }
 
   factory Prayer.fromJson(Map<String, dynamic> json){
-    return Prayer(name:json["name"] as String,
-        time:json["time"] as DateTime,
-        isDone:json["isDone"] as bool);
+    return Prayer(name:json['name'] as String,
+        time: DateTime.parse(json['time'] as String),
+        isDone:json['isDone'] as bool);
   }
 
   Prayer copyWith({String? name, DateTime? time, bool? isDone}){
