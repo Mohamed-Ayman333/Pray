@@ -24,6 +24,11 @@ package model {
             +fromJson(json: Map<String, dynamic>): Prayer
             +copyWith(name: String?, time: DateTime?, isDone: bool?): Prayer
         }
+        
+        enum Language {
+            EN
+            AR
+        }
 
         class Settings {
             +darkMode: bool
@@ -31,10 +36,12 @@ package model {
             +reminderOffsetinMinutes: int
             +stickyNotifications: bool
             +autoIncrementOptionalPrayerCounterBy: int
+            +Azan: bool
+            language: Language
 
             +toJson(): Map<String, dynamic>
             +fromJson(json: Map<String, dynamic>): Settings
-            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?): Settings
+            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, Azan: bool?): Settings
         }
 
         class UserState {
