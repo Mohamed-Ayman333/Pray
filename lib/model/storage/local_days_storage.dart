@@ -18,4 +18,9 @@ class LocalDaysStorage implements IDaysStorage {
     // TODO: Query local DB for date range
     return [];
   }
+
+  @override
+  Future<void> saveAll(List<Day> days) async {
+    //TODO: write all days you get to database
+  }
 }
