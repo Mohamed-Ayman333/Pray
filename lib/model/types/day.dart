@@ -1,32 +1,17 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pray/model/types/prayer.dart';
 
-class Day {
+part 'day.freezed.dart';
+part 'day.g.dart';
 
-  final DateTime date;
-  final List<Prayer> prayers;
+@freezed
+abstract class Day with _$Day {
+  const Day._();
 
-  Day({ required this.date, required this.prayers});
+  const factory Day({DateTime? date, @Default([]) List<Prayer> prayers}) = _Day;
 
-  factory Day.fromJson(Map<String, dynamic> json){
-  return Day(date: DateTime.parse(json['date'] as String),
-    prayers: (json['prayers'] as List<dynamic>?)
-        ?.map((prayerJson) => Prayer.fromJson(prayerJson as Map<String, dynamic>))
-        .toList()??[],);
-  }
+  factory Day.fromJson(Map<String, dynamic> json) => _$DayFromJson(json);
 
-  Map<String, dynamic> toJson(){
-    return {
-      'date': date.toIso8601String(),
-      'prayers': prayers.map((prayer) => prayer.toJson()).toList(),
-    };
-  }
-
-  Day copyWith({ DateTime? date, List<Prayer>? prayers}){
-    return Day(date: date??this.date,
-    prayers: prayers??this.prayers);
-  }
-
-  List<Prayer> get completedPrayers => prayers.where((p)=>p.isDone).toList();
-  List<Prayer> get pendingPrayers => prayers.where((p)=>!p.isDone).toList();
-
+  List<Prayer> get completedPrayers => prayers.where((p) => p.isDone).toList();
+  List<Prayer> get pendingPrayers => prayers.where((p) => !p.isDone).toList();
 }

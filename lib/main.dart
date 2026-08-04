@@ -5,6 +5,7 @@ import 'view/home_page.dart';
 void main() {
   runApp(const PrayApp());
 }
+
 //Root widget
 class PrayApp extends StatelessWidget {
   //the constructor
@@ -17,10 +18,9 @@ class PrayApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pray',
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.green),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
       ),
       home: const HomePage(title: 'Prayer Times'),
     );
   }
 }
-

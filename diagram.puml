@@ -49,8 +49,6 @@ package model {
 
             +toJson(): Map<String, dynamic>
             +UserState.fromJson(json: Map<String, dynamic>): UserState
-            +incrementOptionalPrayerCounter(): UserState
-            +decrementOptionalPrayerCounter(): UserState
             +copyWith(optionalPrayerCounter: int?): UserState
         }
 

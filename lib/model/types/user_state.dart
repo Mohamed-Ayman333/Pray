@@ -1,33 +1,12 @@
-class UserState {
-  final int optionalPrayerCounter;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const UserState({required this.optionalPrayerCounter});
+part 'user_state.freezed.dart';
+part 'user_state.g.dart';
 
-  Map<String, dynamic> toJson() {
-    return {'optionalPrayerCounter': optionalPrayerCounter};
-  }
+@freezed
+abstract class UserState with _$UserState {
+  const factory UserState({@Default(0) int optionalPrayerCounter}) = _UserState;
 
-  factory UserState.fromJson(Map<String, dynamic> json) {
-    return UserState(
-      optionalPrayerCounter: (json['optionalPrayerCounter'] as int?) ?? 0,
-    );
-  }
-
-  UserState copyWith({int? optionalPrayerCounter}) {
-    return UserState(
-      optionalPrayerCounter:
-          optionalPrayerCounter ?? this.optionalPrayerCounter,
-    );
-  }
-
-  UserState incrementOptionalPrayerCounter({int step = 1}) {
-    return copyWith(optionalPrayerCounter: optionalPrayerCounter + step);
-  }
-
-  UserState decrementOptionalPrayerCounter({int step = 1}) {
-    final newCount = (optionalPrayerCounter - step)
-        .clamp(0, double.infinity)
-        .toInt();
-    return copyWith(optionalPrayerCounter: newCount);
-  }
+  factory UserState.fromJson(Map<String, dynamic> json) =>
+      _$UserStateFromJson(json);
 }
