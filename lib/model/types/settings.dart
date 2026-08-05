@@ -1,21 +1,37 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:isar/isar.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:pray/model/types/language.dart';
 
-part 'settings.freezed.dart';
 part 'settings.g.dart';
 
-@freezed
-abstract class Settings with _$Settings {
-  const factory Settings({
-    @Default(true) bool darkMode,
-    @Default(false) bool notifications,
-    @Default(false) bool stickyNotifications,
-    @Default(false) bool azan,
-    @Default(0) int reminderOffsetInMinutes,
-    @Default(0) int autoIncrementOptionalPrayerCounterBy,
-    @Default(Language.en) Language language,
-  }) = _Settings;
+@Collection()
+@JsonSerializable()
+class Settings {
+  // Enforce single-instance record in local DB
+  Id id = 1;
+
+  bool darkMode;
+  bool notifications;
+  bool stickyNotifications;
+  bool azan;
+  int reminderOffsetInMinutes;
+  int autoIncrementOptionalPrayerCounterBy;
+
+  @enumerated
+  Language language;
+
+  Settings({
+    this.darkMode = true,
+    this.notifications = false,
+    this.stickyNotifications = false,
+    this.azan = false,
+    this.reminderOffsetInMinutes = 0,
+    this.autoIncrementOptionalPrayerCounterBy = 0,
+    this.language = Language.en,
+  });
 
   factory Settings.fromJson(Map<String, dynamic> json) =>
       _$SettingsFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SettingsToJson(this);
 }

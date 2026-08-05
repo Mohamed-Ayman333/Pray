@@ -1,12 +1,20 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:isar/isar.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'user_state.freezed.dart';
 part 'user_state.g.dart';
 
-@freezed
-abstract class UserState with _$UserState {
-  const factory UserState({@Default(0) int optionalPrayerCounter}) = _UserState;
+@Collection()
+@JsonSerializable()
+class UserState {
+  // Enforce single-instance record in local DB
+  Id id = 1;
+
+  int optionalPrayerCounter;
+
+  UserState({this.optionalPrayerCounter = 0});
 
   factory UserState.fromJson(Map<String, dynamic> json) =>
       _$UserStateFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UserStateToJson(this);
 }

@@ -1,15 +1,17 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:isar/isar.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-part 'prayer.freezed.dart';
 part 'prayer.g.dart';
 
-@freezed
-abstract class Prayer with _$Prayer {
-  const factory Prayer({
-    @Default('') String name,
-    DateTime? time,
-    @Default(false) bool isDone,
-  }) = _Prayer;
+@embedded
+@JsonSerializable()
+class Prayer {
+  String name;
+  DateTime? time;
+  bool isDone;
+
+  Prayer({this.name = '', this.time, this.isDone = false});
 
   factory Prayer.fromJson(Map<String, dynamic> json) => _$PrayerFromJson(json);
+  Map<String, dynamic> toJson() => _$PrayerToJson(this);
 }
