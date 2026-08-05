@@ -57,72 +57,76 @@ package model {
 
     package storage {
 
-    interface IDaysStorage {
-        +save(day: Day): Future<void>
-        +load(date: DateTime): Future<Day?>
-        +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+        class appDatabase{
+            init(): Future<isar>
+        }
+
+        interface IDaysStorage {
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+        }
+
+        class LocalDaysStorage implements IDaysStorage {
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+        }
+
+        class OnlineDaysStorage implements IDaysStorage {
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+        }
+
+        class DaysRepository implements IDaysStorage {
+            -localStorage: IDaysStorage
+            -onlineStorage: IDaysStorage
+
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+        }
+
+        interface ISettingsStorage {
+            +save(settings: Settings): Future<void>
+            +load(): Future<Settings?>
+        }
+
+        class SettingsStorage implements ISettingsStorage {
+            +save(settings: Settings): Future<void>
+            +load(): Future<Settings?>
+        }
+
+        class SettingsRepository {
+            -settingsStorage: ISettingsStorage
+
+            +save(settings: Settings): Future<void>
+            +load(): Future<Settings?>
+        }
+
+        interface IUserStateStorage {
+            +save(userState: UserState): Future<void>
+            +load(): Future<UserState?>
+        }
+
+        class UserStateStorage implements IUserStateStorage {
+            +save(userState: UserState): Future<void>
+            +load(): Future<UserState?>
+        }
+
+        class UserStateRepository {
+            -userStateStorage: IUserStateStorage
+
+            +save(userState: UserState): Future<void>
+            +load(): Future<UserState?>
+        }
+
+        DaysRepository --> "2" IDaysStorage
+        SettingsRepository --> ISettingsStorage
+        UserStateRepository --> IUserStateStorage
+
     }
-
-    class LocalDaysStorage implements IDaysStorage {
-        +save(day: Day): Future<void>
-        +load(date: DateTime): Future<Day?>
-        +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
-    }
-
-    class OnlineDaysStorage implements IDaysStorage {
-        +save(day: Day): Future<void>
-        +load(date: DateTime): Future<Day?>
-        +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
-    }
-
-    class DaysRepository implements IDaysStorage {
-        -localStorage: IDaysStorage
-        -onlineStorage: IDaysStorage
-
-        +save(day: Day): Future<void>
-        +load(date: DateTime): Future<Day?>
-        +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
-    }
-
-    interface ISettingsStorage {
-        +save(settings: Settings): Future<void>
-        +load(): Future<Settings?>
-    }
-
-    class SettingsStorage implements ISettingsStorage {
-        +save(settings: Settings): Future<void>
-        +load(): Future<Settings?>
-    }
-
-    class SettingsRepository {
-        -settingsStorage: ISettingsStorage
-
-        +save(settings: Settings): Future<void>
-        +load(): Future<Settings?>
-    }
-
-    interface IUserStateStorage {
-        +save(userState: UserState): Future<void>
-        +load(): Future<UserState?>
-    }
-
-    class UserStateStorage implements IUserStateStorage {
-        +save(userState: UserState): Future<void>
-        +load(): Future<UserState?>
-    }
-
-    class UserStateRepository {
-        -userStateStorage: IUserStateStorage
-
-        +save(userState: UserState): Future<void>
-        +load(): Future<UserState?>
-    }
-
-    DaysRepository --> "2" IDaysStorage
-    SettingsRepository --> ISettingsStorage
-    UserStateRepository --> IUserStateStorage
-
-}
 
 }
 

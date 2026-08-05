@@ -1,15 +1,23 @@
+import 'package:isar/isar.dart';
 import 'package:pray/model/storage/i_settings_storage.dart';
 import 'package:pray/model/types/settings.dart';
 
 class SettingsStorage implements ISettingsStorage {
+  final Isar isar;
+
+  SettingsStorage(this.isar);
+
   @override
   Future<void> save(Settings settings) async {
-    // TODO: Write settings to shared_preferences or local file
+    settings.id = 1;
+    await isar.writeTxn(() async {
+      await isar.settings.put(settings);
+    });
   }
 
   @override
   Future<Settings?> load() async {
-    // TODO: Read settings from shared_preferences or local file
-    return null;
+    final settings = await isar.settings.get(1);
+    return settings ?? Settings();
   }
 }
