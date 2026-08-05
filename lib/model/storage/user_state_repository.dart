@@ -12,7 +12,6 @@ class UserStateRepository {
   }
 
   Future<UserState?> load() async {
-    //TODO:save befor returning
     return await _userStateStorage.load();
   }
 }

@@ -12,7 +12,6 @@ class SettingsRepository {
   }
 
   Future<Settings?> load() async {
-    //TODO:save befor returning
     return await _settingsStorage.load();
   }
 }
