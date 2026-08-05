@@ -7,22 +7,29 @@ class LocalDaysStorage implements IDaysStorage {
 
   LocalDaysStorage(this.isar);
 
-  Day? _optimizeDay(Day day) {
-    if (day.date == null) return day;
+  Day? _optimizeDay(Day originalDay) {
+    if (originalDay.date == null) return originalDay;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final dayDate = DateTime(day.date!.year, day.date!.month, day.date!.day);
+    final dayDate = DateTime(
+      originalDay.date!.year,
+      originalDay.date!.month,
+      originalDay.date!.day,
+    );
 
     if (dayDate.isBefore(today)) {
-      day.prayers = day.completedPrayers;
+      final pending = originalDay.pendingPrayers;
+
+      if (pending.isEmpty) {
+        return null;
+      }
+
+      return Day(date: originalDay.date, prayers: List.from(pending))
+        ..id = originalDay.id;
     }
 
-    if (dayDate.isBefore(today) && day.prayers.isEmpty) {
-      return null;
-    }
-
-    return day;
+    return originalDay;
   }
 
   @override
@@ -56,9 +63,10 @@ class LocalDaysStorage implements IDaysStorage {
 
     await isar.writeTxn(() async {
       if (datesToDelete.isNotEmpty) {
-        for (final date in datesToDelete) {
-          await isar.days.filter().dateEqualTo(date).deleteAll();
-        }
+        await isar.days
+            .filter()
+            .anyOf(datesToDelete, (q, DateTime d) => q.dateEqualTo(d))
+            .deleteAll();
       }
 
       if (daysToSave.isNotEmpty) {
