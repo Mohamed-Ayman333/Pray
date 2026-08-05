@@ -23,6 +23,7 @@ class DaysRepository implements IDaysStorage {
 
   @override
   Future<Day?> load(DateTime date) async {
+    //TODO: make it that if the day has pased get it from the local storag directly
     try {
       final remoteDay = await _cachingOnlineStorage.load(date);
       if (remoteDay != null) {
@@ -37,6 +38,7 @@ class DaysRepository implements IDaysStorage {
 
   @override
   Future<List<Day>> getInRange(DateTime startDate, DateTime endDate) async {
+    //TODO: make it that if the day has pased get it from the local storag directly
     try {
       final remoteDays = await _cachingOnlineStorage.getInRange(
         startDate,
