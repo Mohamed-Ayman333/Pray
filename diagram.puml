@@ -65,27 +65,42 @@ package model {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
         class LocalDaysStorage implements IDaysStorage {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
-        class OnlineDaysStorage implements IDaysStorage {
+        class CalculatedDaysStorage implements IDaysStorage {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
+        }
+
+        class CachingCalculatedDaysStorage implements IDaysStorage {
+            -localStorage: IDaysStorage
+            -calculatedStorage: IDaysStorage
+
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
         class DaysRepository implements IDaysStorage {
             -localStorage: IDaysStorage
-            -onlineStorage: IDaysStorage
+            -cachingCalculatedStorage: IDaysStorage
 
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
+            - _isPastOrToday(date: DateTime) : Boolean
         }
 
         interface ISettingsStorage {
