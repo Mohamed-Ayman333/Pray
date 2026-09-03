@@ -1,3 +1,4 @@
+import 'package:adhan/adhan.dart';
 import 'package:isar/isar.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:pray/model/types/language.dart';
@@ -20,6 +21,12 @@ class Settings {
   @enumerated
   Language language;
 
+  @enumerated
+  CalculationMethod calculationMethod;
+
+  @enumerated
+  Madhab madhab;
+
   Settings({
     this.darkMode = true,
     this.notifications = false,
@@ -28,6 +35,8 @@ class Settings {
     this.reminderOffsetInMinutes = 0,
     this.autoIncrementOptionalPrayerCounterBy = 0,
     this.language = Language.en,
+    this.calculationMethod = CalculationMethod.egyptian,
+    this.madhab = Madhab.shafi,
   });
 
   factory Settings.fromJson(Map<String, dynamic> json) =>

@@ -12,7 +12,6 @@ package model {
             + <<get>> pendingPrayers: List<Prayer>
             +toJson(): Map<String, dynamic>
             +Day.fromJson(json: Map<String, dynamic>): Day
-            +copyWith(date: DateTime?, prayers: List<Prayer>?): Day
         }
 
         class Prayer {
@@ -22,7 +21,6 @@ package model {
 
             +toJson(): Map<String, dynamic>
             +Prayer.fromJson(json: Map<String, dynamic>): Prayer
-            +copyWith(name: String?, time: DateTime?, isDone: bool?): Prayer
         }
 
         enum Language {
@@ -31,25 +29,31 @@ package model {
         }
 
         class Settings {
-            +darkMode: bool
-            +notifications: bool
-            +reminderOffsetInMinutes: int
-            +stickyNotifications: bool
-            +autoIncrementOptionalPrayerCounterBy: int
-            +azan: bool
-            +language: Language
+            + id: Id = 1
+            + darkMode: Boolean = true
+            + notifications: Boolean = false
+            + stickyNotifications: Boolean = false
+            + azan: Boolean = false
+            + reminderOffsetInMinutes: Integer = 0
+            + autoIncrementOptionalPrayerCounterBy: Integer = 0
+            + language: Language = Language.en
+            + calculationMethod: CalculationMethod = CalculationMethod.egyptian
+            + madhab: Madhab = Madhab.shafi
 
-            +toJson(): Map<String, dynamic>
-            +Settings.fromJson(json: Map<String, dynamic>): Settings
-            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, azan: bool?, language: Language?): Settings
+            + Settings(...)
+            + Settings.fromJson(json: Map<String, dynamic>): Settings
+            + toJson(): Map<String, dynamic>
+            + settings.fromJson(json: Map<String, dynamic>): Settings
         }
 
         class UserState {
-            +optionalPrayerCounter: int
+            + id: Id = 1
+            + optionalPrayerCounter: Integer = 0
 
-            +toJson(): Map<String, dynamic>
-            +UserState.fromJson(json: Map<String, dynamic>): UserState
-            +copyWith(optionalPrayerCounter: int?): UserState
+            + UserState(...)
+            + UserState.fromJson(json: Map<String, dynamic>): UserState
+            + toJson(): Map<String, dynamic>
+            + UserState.fromJson(json: Map<String, dynamic>): UserState
         }
 
         Day "1" *-- "many" Prayer
@@ -65,27 +69,42 @@ package model {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
         class LocalDaysStorage implements IDaysStorage {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
-        class OnlineDaysStorage implements IDaysStorage {
+        class CalculatedDaysStorage implements IDaysStorage {
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
+        }
+
+        class CachingCalculatedDaysStorage implements IDaysStorage {
+            -localStorage: IDaysStorage
+            -calculatedStorage: IDaysStorage
+
+            +save(day: Day): Future<void>
+            +load(date: DateTime): Future<Day?>
+            +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
         }
 
         class DaysRepository implements IDaysStorage {
             -localStorage: IDaysStorage
-            -onlineStorage: IDaysStorage
+            -cachingCalculatedStorage: IDaysStorage
 
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
+            +saveAll(days: List<Day>): Future<void>
+            - _isPastOrToday(date: DateTime) : Boolean
         }
 
         interface ISettingsStorage {
@@ -133,42 +152,59 @@ package model {
 package controller {
 
     class SettingsController {
-        -settingsRepository: SettingsRepository
-        -currentSettings: Settings
+        - _settingsRepository: SettingsRepository
+        - _currentSettings: Settings
+        - _isInitialized: Boolean = false
 
-        +getSettings(): Settings
-        +toggleDarkMode(enabled: bool): void
-        +toggleNotifications(enabled: bool): void
-        +updateReminderOffset(minutes: int): void
-        +toggleStickyNotifications(enabled: bool): void
-        +updateAutoIncrementOptionalPrayerCounterBy(value: int): void
+        + SettingsController(settingsRepository: SettingsRepository)
+        + get isInitialized(): Boolean
+        + get currentSettings(): Settings
+        + init(): Future<void>
+        + toggleDarkMode(enabled: Boolean): Future<void>
+        + toggleNotifications(enabled: Boolean): Future<void>
+        + toggleStickyNotifications(enabled: Boolean): Future<void>
+        + toggleAzan(enabled: Boolean): Future<void>
+        + updateReminderOffset(minutes: Integer): Future<void>
+        + updateAutoIncrementOptionalPrayerCounterBy(value: Integer): Future<void>
+        + updateLanguage(language: Language): Future<void>
+        + updateCalculationMethod(method: CalculationMethod): Future<void>
+        + updateMadhab(madhab: Madhab): Future<void>
+        - _updateAndSave(update: Function): Future<void>
     }
 
     class UserStateController {
-        -userStateRepository: UserStateRepository
-        -currentUserState: UserState
+        - _userStateRepository: UserStateRepository
+        - _currentUserState: UserState
+        - _isInitialized: Boolean = false
 
-        +getUserState(): UserState
-        +incrementOptionalPrayer(): void
-        +decrementOptionalPrayer(): void
+        + UserStateController(userStateRepository: UserStateRepository)
+        + get isInitialized(): Boolean
+        + get currentUserState(): UserState
+        + init(): Future<void>
+        + incrementOptionalPrayer(step: Integer = 1): Future<void>
+        + decrementOptionalPrayer(step: Integer = 1): Future<void>
+        + setOptionalPrayerCounter(value: Integer): Future<void>
+        - _updateAndSave(update: Function): Future<void>
     }
 
     class DaysController {
-        -daysRepository: DaysRepository
-        -loadedDays: Map<DateTime, Day>
+        - _daysRepository: IDaysStorage
+        - _loadedDays: Map<DateTime, Day>
 
-        +loadDay(date: DateTime): void
-        +loadDaysInRange(startDate: DateTime, endDate: DateTime): void
-        +getDay(date: DateTime): Day?
-        +togglePrayer(date: DateTime, prayerName: String): void
+        + DaysController(daysRepository: IDaysStorage)
+        + loadDay(date: DateTime): Future<void>
+        + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
+        + getDay(date: DateTime): Day?
+        + togglePrayer(date: DateTime, prayerName: String): Future<void>
+        - _normalizeDate(date: DateTime): DateTime
     }
 
-    SettingsController --> SettingsRepository
-    SettingsController --> Settings
-    UserStateController --> UserStateRepository
-    UserStateController --> UserState
-    DaysController --> DaysRepository
-    DaysController --> "many" Day
+    DaysController "1" --> "1" IDaysStorage : uses
+    DaysController "1" o-- "*" Day : manages in cache
+    SettingsController "1" --> "1" SettingsRepository : delegates persistence to
+    SettingsController "1" o-- "1" Settings : holds state
+    UserStateController "1" --> "1" UserStateRepository : delegates persistence to
+    UserStateController "1" o-- "1" UserState : holds state
     
 }
 

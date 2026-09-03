@@ -27,29 +27,41 @@ const SettingsSchema = CollectionSchema(
       name: r'azan',
       type: IsarType.bool,
     ),
-    r'darkMode': PropertySchema(
+    r'calculationMethod': PropertySchema(
       id: 2,
+      name: r'calculationMethod',
+      type: IsarType.byte,
+      enumMap: _SettingscalculationMethodEnumValueMap,
+    ),
+    r'darkMode': PropertySchema(
+      id: 3,
       name: r'darkMode',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'language',
       type: IsarType.byte,
       enumMap: _SettingslanguageEnumValueMap,
     ),
+    r'madhab': PropertySchema(
+      id: 5,
+      name: r'madhab',
+      type: IsarType.byte,
+      enumMap: _SettingsmadhabEnumValueMap,
+    ),
     r'notifications': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'notifications',
       type: IsarType.bool,
     ),
     r'reminderOffsetInMinutes': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'reminderOffsetInMinutes',
       type: IsarType.long,
     ),
     r'stickyNotifications': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'stickyNotifications',
       type: IsarType.bool,
     )
@@ -85,11 +97,13 @@ void _settingsSerialize(
 ) {
   writer.writeLong(offsets[0], object.autoIncrementOptionalPrayerCounterBy);
   writer.writeBool(offsets[1], object.azan);
-  writer.writeBool(offsets[2], object.darkMode);
-  writer.writeByte(offsets[3], object.language.index);
-  writer.writeBool(offsets[4], object.notifications);
-  writer.writeLong(offsets[5], object.reminderOffsetInMinutes);
-  writer.writeBool(offsets[6], object.stickyNotifications);
+  writer.writeByte(offsets[2], object.calculationMethod.index);
+  writer.writeBool(offsets[3], object.darkMode);
+  writer.writeByte(offsets[4], object.language.index);
+  writer.writeByte(offsets[5], object.madhab.index);
+  writer.writeBool(offsets[6], object.notifications);
+  writer.writeLong(offsets[7], object.reminderOffsetInMinutes);
+  writer.writeBool(offsets[8], object.stickyNotifications);
 }
 
 Settings _settingsDeserialize(
@@ -102,13 +116,18 @@ Settings _settingsDeserialize(
     autoIncrementOptionalPrayerCounterBy:
         reader.readLongOrNull(offsets[0]) ?? 0,
     azan: reader.readBoolOrNull(offsets[1]) ?? false,
-    darkMode: reader.readBoolOrNull(offsets[2]) ?? true,
+    calculationMethod: _SettingscalculationMethodValueEnumMap[
+            reader.readByteOrNull(offsets[2])] ??
+        CalculationMethod.egyptian,
+    darkMode: reader.readBoolOrNull(offsets[3]) ?? true,
     language:
-        _SettingslanguageValueEnumMap[reader.readByteOrNull(offsets[3])] ??
+        _SettingslanguageValueEnumMap[reader.readByteOrNull(offsets[4])] ??
             Language.en,
-    notifications: reader.readBoolOrNull(offsets[4]) ?? false,
-    reminderOffsetInMinutes: reader.readLongOrNull(offsets[5]) ?? 0,
-    stickyNotifications: reader.readBoolOrNull(offsets[6]) ?? false,
+    madhab: _SettingsmadhabValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+        Madhab.shafi,
+    notifications: reader.readBoolOrNull(offsets[6]) ?? false,
+    reminderOffsetInMinutes: reader.readLongOrNull(offsets[7]) ?? 0,
+    stickyNotifications: reader.readBoolOrNull(offsets[8]) ?? false,
   );
   object.id = id;
   return object;
@@ -126,21 +145,58 @@ P _settingsDeserializeProp<P>(
     case 1:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 2:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (_SettingscalculationMethodValueEnumMap[
+              reader.readByteOrNull(offset)] ??
+          CalculationMethod.egyptian) as P;
     case 3:
+      return (reader.readBoolOrNull(offset) ?? true) as P;
+    case 4:
       return (_SettingslanguageValueEnumMap[reader.readByteOrNull(offset)] ??
           Language.en) as P;
-    case 4:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 5:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (_SettingsmadhabValueEnumMap[reader.readByteOrNull(offset)] ??
+          Madhab.shafi) as P;
     case 6:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 7:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 8:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
 
+const _SettingscalculationMethodEnumValueMap = {
+  'muslim_world_league': 0,
+  'egyptian': 1,
+  'karachi': 2,
+  'umm_al_qura': 3,
+  'dubai': 4,
+  'moon_sighting_committee': 5,
+  'north_america': 6,
+  'kuwait': 7,
+  'qatar': 8,
+  'singapore': 9,
+  'turkey': 10,
+  'tehran': 11,
+  'other': 12,
+};
+const _SettingscalculationMethodValueEnumMap = {
+  0: CalculationMethod.muslim_world_league,
+  1: CalculationMethod.egyptian,
+  2: CalculationMethod.karachi,
+  3: CalculationMethod.umm_al_qura,
+  4: CalculationMethod.dubai,
+  5: CalculationMethod.moon_sighting_committee,
+  6: CalculationMethod.north_america,
+  7: CalculationMethod.kuwait,
+  8: CalculationMethod.qatar,
+  9: CalculationMethod.singapore,
+  10: CalculationMethod.turkey,
+  11: CalculationMethod.tehran,
+  12: CalculationMethod.other,
+};
 const _SettingslanguageEnumValueMap = {
   'ar': 0,
   'en': 1,
@@ -148,6 +204,14 @@ const _SettingslanguageEnumValueMap = {
 const _SettingslanguageValueEnumMap = {
   0: Language.ar,
   1: Language.en,
+};
+const _SettingsmadhabEnumValueMap = {
+  'shafi': 0,
+  'hanafi': 1,
+};
+const _SettingsmadhabValueEnumMap = {
+  0: Madhab.shafi,
+  1: Madhab.hanafi,
 };
 
 Id _settingsGetId(Settings object) {
@@ -305,6 +369,62 @@ extension SettingsQueryFilter
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+      calculationMethodEqualTo(CalculationMethod value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'calculationMethod',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+      calculationMethodGreaterThan(
+    CalculationMethod value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'calculationMethod',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+      calculationMethodLessThan(
+    CalculationMethod value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'calculationMethod',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
+      calculationMethodBetween(
+    CalculationMethod lower,
+    CalculationMethod upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'calculationMethod',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterFilterCondition> darkModeEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -412,6 +532,59 @@ extension SettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'language',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> madhabEqualTo(
+      Madhab value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'madhab',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> madhabGreaterThan(
+    Madhab value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'madhab',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> madhabLessThan(
+    Madhab value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'madhab',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> madhabBetween(
+    Madhab lower,
+    Madhab upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'madhab',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -531,6 +704,18 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByCalculationMethod() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'calculationMethod', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByCalculationMethodDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'calculationMethod', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> sortByDarkMode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkMode', Sort.asc);
@@ -552,6 +737,18 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
   QueryBuilder<Settings, Settings, QAfterSortBy> sortByLanguageDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'language', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByMadhab() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'madhab', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByMadhabDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'madhab', Sort.desc);
     });
   }
 
@@ -624,6 +821,18 @@ extension SettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByCalculationMethod() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'calculationMethod', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByCalculationMethodDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'calculationMethod', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> thenByDarkMode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkMode', Sort.asc);
@@ -657,6 +866,18 @@ extension SettingsQuerySortThenBy
   QueryBuilder<Settings, Settings, QAfterSortBy> thenByLanguageDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'language', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByMadhab() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'madhab', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByMadhabDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'madhab', Sort.desc);
     });
   }
 
@@ -715,6 +936,12 @@ extension SettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Settings, Settings, QDistinct> distinctByCalculationMethod() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'calculationMethod');
+    });
+  }
+
   QueryBuilder<Settings, Settings, QDistinct> distinctByDarkMode() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'darkMode');
@@ -724,6 +951,12 @@ extension SettingsQueryWhereDistinct
   QueryBuilder<Settings, Settings, QDistinct> distinctByLanguage() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'language');
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QDistinct> distinctByMadhab() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'madhab');
     });
   }
 
@@ -768,6 +1001,13 @@ extension SettingsQueryProperty
     });
   }
 
+  QueryBuilder<Settings, CalculationMethod, QQueryOperations>
+      calculationMethodProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'calculationMethod');
+    });
+  }
+
   QueryBuilder<Settings, bool, QQueryOperations> darkModeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'darkMode');
@@ -777,6 +1017,12 @@ extension SettingsQueryProperty
   QueryBuilder<Settings, Language, QQueryOperations> languageProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'language');
+    });
+  }
+
+  QueryBuilder<Settings, Madhab, QQueryOperations> madhabProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'madhab');
     });
   }
 
@@ -815,6 +1061,11 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
           (json['autoIncrementOptionalPrayerCounterBy'] as num?)?.toInt() ?? 0,
       language: $enumDecodeNullable(_$LanguageEnumMap, json['language']) ??
           Language.en,
+      calculationMethod: $enumDecodeNullable(
+              _$CalculationMethodEnumMap, json['calculationMethod']) ??
+          CalculationMethod.egyptian,
+      madhab:
+          $enumDecodeNullable(_$MadhabEnumMap, json['madhab']) ?? Madhab.shafi,
     )..id = (json['id'] as num).toInt();
 
 Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
@@ -827,9 +1078,33 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'autoIncrementOptionalPrayerCounterBy':
           instance.autoIncrementOptionalPrayerCounterBy,
       'language': _$LanguageEnumMap[instance.language]!,
+      'calculationMethod':
+          _$CalculationMethodEnumMap[instance.calculationMethod]!,
+      'madhab': _$MadhabEnumMap[instance.madhab]!,
     };
 
 const _$LanguageEnumMap = {
   Language.ar: 'ar',
   Language.en: 'en',
+};
+
+const _$CalculationMethodEnumMap = {
+  CalculationMethod.muslim_world_league: 'muslim_world_league',
+  CalculationMethod.egyptian: 'egyptian',
+  CalculationMethod.karachi: 'karachi',
+  CalculationMethod.umm_al_qura: 'umm_al_qura',
+  CalculationMethod.dubai: 'dubai',
+  CalculationMethod.moon_sighting_committee: 'moon_sighting_committee',
+  CalculationMethod.north_america: 'north_america',
+  CalculationMethod.kuwait: 'kuwait',
+  CalculationMethod.qatar: 'qatar',
+  CalculationMethod.singapore: 'singapore',
+  CalculationMethod.turkey: 'turkey',
+  CalculationMethod.tehran: 'tehran',
+  CalculationMethod.other: 'other',
+};
+
+const _$MadhabEnumMap = {
+  Madhab.shafi: 'shafi',
+  Madhab.hanafi: 'hanafi',
 };

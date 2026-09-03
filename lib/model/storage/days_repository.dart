@@ -3,13 +3,13 @@ import 'package:pray/model/types/day.dart';
 
 class DaysRepository implements IDaysStorage {
   final IDaysStorage _localStorage;
-  final IDaysStorage _cachingOnlineStorage;
+  final IDaysStorage _cachingCalculatedStorage;
 
   DaysRepository({
     required IDaysStorage localStorage,
-    required IDaysStorage cachingOnlineStorage,
+    required IDaysStorage cachingCalculatedStorage,
   }) : _localStorage = localStorage,
-       _cachingOnlineStorage = cachingOnlineStorage;
+       _cachingCalculatedStorage = cachingCalculatedStorage;
 
   /// Returns true if [date] is today or any day in the past.
   bool _isPastOrToday(DateTime date) {
@@ -41,21 +41,16 @@ class DaysRepository implements IDaysStorage {
       }
     }
 
-    // 2. Otherwise (future day, or local was missing), pull online
-    try {
-      final remoteDay = await _cachingOnlineStorage.load(date);
-      if (remoteDay != null) {
-        return remoteDay;
-      }
-    } catch (e) {
-      // Network failure, timeout, or no connection -> proceed to fallback
+    // 2. Otherwise (future day, or local was missing), pull Calculated
+    final calculatedDay = await _cachingCalculatedStorage.load(date);
+    if (calculatedDay != null) {
+      return calculatedDay;
     }
 
-    // 3. Final fallback to local storage if remote failed or returned null
+    // 3. Final fallback to local storage
     return await _localStorage.load(date);
   }
 
-  @override
   @override
   Future<List<Day>> getInRange(DateTime startDate, DateTime endDate) async {
     final now = DateTime.now();
@@ -80,7 +75,7 @@ class DaysRepository implements IDaysStorage {
     // Part 1: Past + Today (from Local)
     final localPartFuture = _localStorage.getInRange(start, today);
 
-    // Part 2: Future Days (from Remote, cached locally)
+    // Part 2: Future Days (from Calculated, cached locally)
     final remotePartFuture = _fetchFutureRange(tomorrow, end);
 
     // Wait for both requests in parallel
@@ -92,15 +87,14 @@ class DaysRepository implements IDaysStorage {
     return [...localDays, ...futureDays];
   }
 
-  /// Helper to safely load future dates from online storage with local fallback
+  /// Helper to safely load future dates from Calculated storage with local fallback
   Future<List<Day>> _fetchFutureRange(DateTime start, DateTime end) async {
-    try {
-      final remoteDays = await _cachingOnlineStorage.getInRange(start, end);
-      if (remoteDays.isNotEmpty) {
-        return remoteDays;
-      }
-    } catch (e) {
-      // Network error or offline -> fallback to local storage
+    final calculatedDays = await _cachingCalculatedStorage.getInRange(
+      start,
+      end,
+    );
+    if (calculatedDays.isNotEmpty) {
+      return calculatedDays;
     }
     return await _localStorage.getInRange(start, end);
   }
