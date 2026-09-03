@@ -43,14 +43,17 @@ package model {
             + Settings(...)
             + Settings.fromJson(json: Map<String, dynamic>): Settings
             + toJson(): Map<String, dynamic>
+            + settings.fromJson(json: Map<String, dynamic>): Settings
         }
 
         class UserState {
-            +optionalPrayerCounter: int
+            + id: Id = 1
+            + optionalPrayerCounter: Integer = 0
 
-            +toJson(): Map<String, dynamic>
-            +UserState.fromJson(json: Map<String, dynamic>): UserState
-            +copyWith(optionalPrayerCounter: int?): UserState
+            + UserState(...)
+            + UserState.fromJson(json: Map<String, dynamic>): UserState
+            + toJson(): Map<String, dynamic>
+            + UserState.fromJson(json: Map<String, dynamic>): UserState
         }
 
         Day "1" *-- "many" Prayer
@@ -170,12 +173,18 @@ package controller {
     }
 
     class UserStateController {
-        -userStateRepository: UserStateRepository
-        -currentUserState: UserState
+        - _userStateRepository: UserStateRepository
+        - _currentUserState: UserState
+        - _isInitialized: Boolean = false
 
-        +getUserState(): UserState
-        +incrementOptionalPrayer(): void
-        +decrementOptionalPrayer(): void
+        + UserStateController(userStateRepository: UserStateRepository)
+        + get isInitialized(): Boolean
+        + get currentUserState(): UserState
+        + init(): Future<void>
+        + incrementOptionalPrayer(step: Integer = 1): Future<void>
+        + decrementOptionalPrayer(step: Integer = 1): Future<void>
+        + setOptionalPrayerCounter(value: Integer): Future<void>
+        - _updateAndSave(update: Function): Future<void>
     }
 
     class DaysController {
@@ -194,8 +203,8 @@ package controller {
     DaysController "1" o-- "*" Day : manages in cache
     SettingsController "1" --> "1" SettingsRepository : delegates persistence to
     SettingsController "1" o-- "1" Settings : holds state
-    UserStateController --> UserStateRepository
-    UserStateController --> UserState
+    UserStateController "1" --> "1" UserStateRepository : delegates persistence to
+    UserStateController "1" o-- "1" UserState : holds state
     
 }
 
