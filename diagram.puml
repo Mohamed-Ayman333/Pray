@@ -169,21 +169,23 @@ package controller {
     }
 
     class DaysController {
-        -daysRepository: DaysRepository
-        -loadedDays: Map<DateTime, Day>
+        - _daysRepository: IDaysStorage
+        - _loadedDays: Map<DateTime, Day>
 
-        +loadDay(date: DateTime): void
-        +loadDaysInRange(startDate: DateTime, endDate: DateTime): void
-        +getDay(date: DateTime): Day?
-        +togglePrayer(date: DateTime, prayerName: String): void
+        + DaysController(daysRepository: IDaysStorage)
+        + loadDay(date: DateTime): Future<void>
+        + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
+        + getDay(date: DateTime): Day?
+        + togglePrayer(date: DateTime, prayerName: String): Future<void>
+        - _normalizeDate(date: DateTime): DateTime
     }
 
+    DaysController "1" --> "1" IDaysStorage : uses
+    DaysController "1" o-- "*" Day : manages in cache
     SettingsController --> SettingsRepository
     SettingsController --> Settings
     UserStateController --> UserStateRepository
     UserStateController --> UserState
-    DaysController --> DaysRepository
-    DaysController --> "many" Day
     
 }
 
