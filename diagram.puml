@@ -12,7 +12,6 @@ package model {
             + <<get>> pendingPrayers: List<Prayer>
             +toJson(): Map<String, dynamic>
             +Day.fromJson(json: Map<String, dynamic>): Day
-            +copyWith(date: DateTime?, prayers: List<Prayer>?): Day
         }
 
         class Prayer {
@@ -22,7 +21,6 @@ package model {
 
             +toJson(): Map<String, dynamic>
             +Prayer.fromJson(json: Map<String, dynamic>): Prayer
-            +copyWith(name: String?, time: DateTime?, isDone: bool?): Prayer
         }
 
         enum Language {
@@ -31,17 +29,20 @@ package model {
         }
 
         class Settings {
-            +darkMode: bool
-            +notifications: bool
-            +reminderOffsetInMinutes: int
-            +stickyNotifications: bool
-            +autoIncrementOptionalPrayerCounterBy: int
-            +azan: bool
-            +language: Language
+            + id: Id = 1
+            + darkMode: Boolean = true
+            + notifications: Boolean = false
+            + stickyNotifications: Boolean = false
+            + azan: Boolean = false
+            + reminderOffsetInMinutes: Integer = 0
+            + autoIncrementOptionalPrayerCounterBy: Integer = 0
+            + language: Language = Language.en
+            + calculationMethod: CalculationMethod = CalculationMethod.egyptian
+            + madhab: Madhab = Madhab.shafi
 
-            +toJson(): Map<String, dynamic>
-            +Settings.fromJson(json: Map<String, dynamic>): Settings
-            +copyWith(darkMode: bool?, notifications: bool?, reminderOffsetinMinutes: int?, stickyNotifications: bool?, autoIncrementOptionalPrayerCounterBy: int?, azan: bool?, language: Language?): Settings
+            + Settings(...)
+            + Settings.fromJson(json: Map<String, dynamic>): Settings
+            + toJson(): Map<String, dynamic>
         }
 
         class UserState {
@@ -148,15 +149,24 @@ package model {
 package controller {
 
     class SettingsController {
-        -settingsRepository: SettingsRepository
-        -currentSettings: Settings
+        - _settingsRepository: SettingsRepository
+        - _currentSettings: Settings
+        - _isInitialized: Boolean = false
 
-        +getSettings(): Settings
-        +toggleDarkMode(enabled: bool): void
-        +toggleNotifications(enabled: bool): void
-        +updateReminderOffset(minutes: int): void
-        +toggleStickyNotifications(enabled: bool): void
-        +updateAutoIncrementOptionalPrayerCounterBy(value: int): void
+        + SettingsController(settingsRepository: SettingsRepository)
+        + get isInitialized(): Boolean
+        + get currentSettings(): Settings
+        + init(): Future<void>
+        + toggleDarkMode(enabled: Boolean): Future<void>
+        + toggleNotifications(enabled: Boolean): Future<void>
+        + toggleStickyNotifications(enabled: Boolean): Future<void>
+        + toggleAzan(enabled: Boolean): Future<void>
+        + updateReminderOffset(minutes: Integer): Future<void>
+        + updateAutoIncrementOptionalPrayerCounterBy(value: Integer): Future<void>
+        + updateLanguage(language: Language): Future<void>
+        + updateCalculationMethod(method: CalculationMethod): Future<void>
+        + updateMadhab(madhab: Madhab): Future<void>
+        - _updateAndSave(update: Function): Future<void>
     }
 
     class UserStateController {
@@ -182,8 +192,8 @@ package controller {
 
     DaysController "1" --> "1" IDaysStorage : uses
     DaysController "1" o-- "*" Day : manages in cache
-    SettingsController --> SettingsRepository
-    SettingsController --> Settings
+    SettingsController "1" --> "1" SettingsRepository : delegates persistence to
+    SettingsController "1" o-- "1" Settings : holds state
     UserStateController --> UserStateRepository
     UserStateController --> UserState
     
