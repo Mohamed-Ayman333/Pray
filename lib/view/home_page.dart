@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'style.dart';
+import 'app_colors.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.title});
@@ -12,22 +12,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
- List<Text> times = [
-   Text('date'),
-   Text('hi0'),
-   Text('hi1'),
-   Text('hi2'),
-   Text('hi3'),
-   Text('hi4'),
-   Text('hi5'),
-   Text('hi5'),
-   Text('hi5'),
-   Text('hi5'),
-   Text('hi5'),
-   Text('hi5'),
-   Text('hi5'),
- ];
+  List<Text> times = [
+    Text('date'),
+    Text('hi0'),
+    Text('hi1'),
+    Text('hi2'),
+    Text('hi3'),
+    Text('hi4'),
+    Text('hi5'),
+    Text('hi5'),
+    Text('hi5'),
+    Text('hi5'),
+    Text('hi5'),
+    Text('hi5'),
+    Text('hi5'),
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,35 +35,38 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.teal[700],
         title: Text(
           widget.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: Center(
         widthFactor: 1,
-        child:Column(
+        child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                    child:TextButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateColor.fromMap(primaryButtonStyle),
+                  child: TextButton(
+                    onPressed: () {},
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateColor.fromMap(
+                        primaryButtonStyle,
                       ),
-                      child: Text('Today'),
                     ),
+                    child: Text('Today'),
+                  ),
                 ),
                 Expanded(
-                    child: TextButton(
-                        onPressed: () {},
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateColor.fromMap(primaryButtonStyle),                    ),
-                        child: Text('30 Days')
+                  child: TextButton(
+                    onPressed: () {},
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateColor.fromMap(
+                        primaryButtonStyle,
+                      ),
                     ),
+                    child: Text('30 Days'),
+                  ),
                 ),
               ],
             ),
@@ -75,10 +77,7 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Container(
                     color: Colors.teal[400],
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                     child: Column(
                       spacing: 10,
                       children: [
