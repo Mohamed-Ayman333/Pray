@@ -1,29 +1,27 @@
 import 'package:adhan/adhan.dart' hide Prayer;
+import 'package:pray/controller/settings_controller.dart';
 import 'package:pray/model/storage/i_days_storage.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
 
 class CalculatedDaysStorage implements IDaysStorage {
-  final double latitude;
-  final double longitude;
-  final CalculationMethod calculationMethod;
-  final Madhab madhab;
+  final SettingsController _settingsController;
 
-  CalculatedDaysStorage({
-    required this.latitude,
-    required this.longitude,
-    this.calculationMethod = CalculationMethod.egyptian,
-    this.madhab = Madhab.shafi,
-  });
+  CalculatedDaysStorage({required SettingsController settingsController})
+    : _settingsController = settingsController;
 
-  /// Computes the astronomical prayer times for [date] and maps them directly
-  /// into your `Day` domain model containing `Prayer` instances.
+  /// Computes the astronomical prayer times for [date] dynamically reading
+  /// live settings (coordinates, calculation method, madhab) from SettingsController.
   Day _calculateDay(DateTime date) {
+    final settings = _settingsController.currentSettings;
+
     final normalizedDate = DateTime(date.year, date.month, date.day);
-    final coordinates = Coordinates(latitude, longitude);
+    final coordinates = Coordinates(settings.latitude, settings.longitude);
     final dateComponents = DateComponents.from(normalizedDate);
 
-    final params = calculationMethod.getParameters()..madhab = madhab;
+    final params = settings.calculationMethod.getParameters()
+      ..madhab = settings.madhab;
+
     final prayerTimes = PrayerTimes(coordinates, dateComponents, params);
 
     final List<Prayer> prayers = [
@@ -60,11 +58,11 @@ class CalculatedDaysStorage implements IDaysStorage {
 
   @override
   Future<void> save(Day day) async {
-    // Read-only generator; save operations are handled by LocalDaysStorage
+    // Read-only generator; save operations are handled by DaysLocalStorage
   }
 
   @override
   Future<void> saveAll(List<Day> days) async {
-    // Read-only generator; save operations are handled by LocalDaysStorage
+    // Read-only generator; save operations are handled by DaysLocalStorage
   }
 }
