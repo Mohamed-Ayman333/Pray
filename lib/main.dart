@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-// Import domain models / schemas for Isar initialization
-import 'package:pray/model/types/settings.dart';
-import 'package:pray/model/types/user_state.dart';
-import 'package:pray/model/types/day.dart';
+// Import Database helper
+import 'package:pray/model/storage/app_database.dart';
 
 // Import storage interfaces & concrete implementations
 import 'package:pray/model/storage/i_settings_storage.dart';
@@ -37,13 +33,8 @@ import 'package:pray/view/ui/home_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // STEP 0: Open Isar Database
-  final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open([
-    SettingsSchema,
-    UserStateSchema,
-    DaySchema,
-  ], directory: dir.path);
+  // STEP 0: Open Isar Database via AppDatabase helper
+  final isar = await AppDatabase.init();
 
   // STEP 1: Initialize raw Isar storage engines
   final ISettingsStorage settingsStorage = SettingsStorage(isar);
@@ -65,7 +56,7 @@ void main() async {
     userStateRepository: userStateRepository,
   );
 
-  // STEP 3: Build calculation storages with live SettingsController reference
+  // STEP 3: Build calculation storages with dynamic SettingsController reference
   final IDaysStorage calcDaysStorage = CalculatedDaysStorage(
     settingsController: settingsController,
   );

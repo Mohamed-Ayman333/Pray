@@ -36,24 +36,22 @@ package model {
             + azan: Boolean = false
             + reminderOffsetInMinutes: Integer = 0
             + autoIncrementOptionalPrayerCounterBy: Integer = 0
+            + latitude: Double = 30.0444
+            + longitude: Double = 31.2357
             + language: Language = Language.en
             + calculationMethod: CalculationMethod = CalculationMethod.egyptian
             + madhab: Madhab = Madhab.shafi
 
-            + Settings(...)
             + Settings.fromJson(json: Map<String, dynamic>): Settings
             + toJson(): Map<String, dynamic>
-            + settings.fromJson(json: Map<String, dynamic>): Settings
         }
 
         class UserState {
             + id: Id = 1
             + optionalPrayerCounter: Integer = 0
 
-            + UserState(...)
             + UserState.fromJson(json: Map<String, dynamic>): UserState
             + toJson(): Map<String, dynamic>
-            + UserState.fromJson(json: Map<String, dynamic>): UserState
         }
 
         Day "1" *-- "many" Prayer
@@ -73,6 +71,9 @@ package model {
         }
 
         class LocalDaysStorage implements IDaysStorage {
+            + iser: Isar
+
+            - _optimizeDay(originalDay: Day): Day
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
@@ -80,6 +81,9 @@ package model {
         }
 
         class CalculatedDaysStorage implements IDaysStorage {
+            - _settingsController: SettingsController
+
+            - _calculateDay(date: DateTime): Day
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
@@ -90,6 +94,7 @@ package model {
             -localStorage: IDaysStorage
             -calculatedStorage: IDaysStorage
 
+            - _isToday(date: DateTime): Boolean
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
@@ -104,7 +109,9 @@ package model {
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
             +saveAll(days: List<Day>): Future<void>
-            - _isPastOrToday(date: DateTime) : Boolean
+            - _isPast(date: DateTime) : Boolean
+            - _isToday(date: DateTime) : Boolean
+            - fetchTodayRange(DateTime today): Future<List<Day>>
         }
 
         interface ISettingsStorage {
@@ -113,6 +120,8 @@ package model {
         }
 
         class SettingsStorage implements ISettingsStorage {
+            + iser: Isar
+
             +save(settings: Settings): Future<void>
             +load(): Future<Settings?>
         }
@@ -130,6 +139,8 @@ package model {
         }
 
         class UserStateStorage implements IUserStateStorage {
+            + iser: Isar
+
             +save(userState: UserState): Future<void>
             +load(): Future<UserState?>
         }
@@ -141,6 +152,11 @@ package model {
             +load(): Future<UserState?>
         }
 
+        localDaysStorage --> "1" Iser
+        settingsStorage --> "1" Iser
+        userStateStorage --> "1" Iser
+        calculatedDaysStorage --> "1" SettingsController
+        cachingCalculatedDaysStorage --> "2" IDaysStorage
         DaysRepository --> "2" IDaysStorage
         SettingsRepository --> ISettingsStorage
         UserStateRepository --> IUserStateStorage
@@ -156,10 +172,11 @@ package controller {
         - _currentSettings: Settings
         - _isInitialized: Boolean = false
 
-        + SettingsController(settingsRepository: SettingsRepository)
-        + get isInitialized(): Boolean
-        + get currentSettings(): Settings
+        + <<get>> isInitialized: Boolean
+        + <<get>> currentSettings: Settings
         + init(): Future<void>
+        - _updateAndSave(update: Function): Future<void>
+        + updateLocation(latitude: Double, longitude: Double): Future<void>
         + toggleDarkMode(enabled: Boolean): Future<void>
         + toggleNotifications(enabled: Boolean): Future<void>
         + toggleStickyNotifications(enabled: Boolean): Future<void>
@@ -169,7 +186,6 @@ package controller {
         + updateLanguage(language: Language): Future<void>
         + updateCalculationMethod(method: CalculationMethod): Future<void>
         + updateMadhab(madhab: Madhab): Future<void>
-        - _updateAndSave(update: Function): Future<void>
     }
 
     class UserStateController {
@@ -177,34 +193,33 @@ package controller {
         - _currentUserState: UserState
         - _isInitialized: Boolean = false
 
-        + UserStateController(userStateRepository: UserStateRepository)
-        + get isInitialized(): Boolean
-        + get currentUserState(): UserState
+        + <<get>> isInitialized: Boolean
+        + <<get>> currentUserState: UserState
         + init(): Future<void>
+        - _updateAndSave(update: Function): Future<void>
         + incrementOptionalPrayer(step: Integer = 1): Future<void>
         + decrementOptionalPrayer(step: Integer = 1): Future<void>
         + setOptionalPrayerCounter(value: Integer): Future<void>
-        - _updateAndSave(update: Function): Future<void>
     }
 
     class DaysController {
         - _daysRepository: IDaysStorage
         - _loadedDays: Map<DateTime, Day>
 
-        + DaysController(daysRepository: IDaysStorage)
+        + <<get>> loadedDays: Map<DateTime, Day>
+        - _normalizeDate(date: DateTime): DateTime
         + loadDay(date: DateTime): Future<void>
         + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
         + getDay(date: DateTime): Day?
         + togglePrayer(date: DateTime, prayerName: String): Future<void>
-        - _normalizeDate(date: DateTime): DateTime
     }
 
-    DaysController "1" --> "1" IDaysStorage : uses
-    DaysController "1" o-- "*" Day : manages in cache
-    SettingsController "1" --> "1" SettingsRepository : delegates persistence to
-    SettingsController "1" o-- "1" Settings : holds state
-    UserStateController "1" --> "1" UserStateRepository : delegates persistence to
-    UserStateController "1" o-- "1" UserState : holds state
+    DaysController "1" --> "1" IDaysStorage
+    DaysController "1" o-- "*" Day
+    SettingsController "1" --> "1" SettingsRepository
+    SettingsController "1" o-- "1" Settings
+    UserStateController "1" --> "1" UserStateRepository
+    UserStateController "1" o-- "1" UserState
     
 }
 

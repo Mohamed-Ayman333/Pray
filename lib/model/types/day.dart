@@ -19,7 +19,6 @@ class Day {
   factory Day.fromJson(Map<String, dynamic> json) => _$DayFromJson(json);
   Map<String, dynamic> toJson() => _$DayToJson(this);
 
-  // Helper getters preserved from your original model
   @ignore
   List<Prayer> get completedPrayers => prayers.where((p) => p.isDone).toList();
 
