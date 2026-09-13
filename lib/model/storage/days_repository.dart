@@ -11,14 +11,18 @@ class DaysRepository implements IDaysStorage {
   }) : _localStorage = localStorage,
        _cachingCalculatedStorage = cachingCalculatedStorage;
 
-  /// Returns true if [date] is today or any day in the past.
-  bool _isPastOrToday(DateTime date) {
+  bool _isPast(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final targetDate = DateTime(date.year, date.month, date.day);
+    return targetDate.isBefore(today);
+  }
 
-    // If targetDate <= today, it's today or earlier
-    return targetDate.isBefore(today) || targetDate.isAtSameMomentAs(today);
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(date.year, date.month, date.day);
+    return targetDate.isAtSameMomentAs(today);
   }
 
   @override
@@ -33,69 +37,75 @@ class DaysRepository implements IDaysStorage {
 
   @override
   Future<Day?> load(DateTime date) async {
-    // 1. If it's today or a past day, prioritize local storage
-    if (_isPastOrToday(date)) {
+    // 1. Past: Local ONLY
+    if (_isPast(date)) {
+      return await _localStorage.load(date);
+    }
+
+    // 2. Today: Local FIRST -> Calculated fallback (caching to local)
+    if (_isToday(date)) {
       final localDay = await _localStorage.load(date);
       if (localDay != null) {
         return localDay;
       }
+      return await _cachingCalculatedStorage.load(date);
     }
 
-    // 2. Otherwise (future day, or local was missing), pull Calculated
-    final calculatedDay = await _cachingCalculatedStorage.load(date);
-    if (calculatedDay != null) {
-      return calculatedDay;
-    }
-
-    // 3. Final fallback to local storage
-    return await _localStorage.load(date);
+    // 3. Future: Pure Calculation (No local persistence)
+    return await _cachingCalculatedStorage.load(date);
   }
 
   @override
   Future<List<Day>> getInRange(DateTime startDate, DateTime endDate) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final tomorrow = today.add(const Duration(days: 1));
 
-    // Normalize range inputs to midnight boundaries
     final start = DateTime(startDate.year, startDate.month, startDate.day);
     final end = DateTime(endDate.year, endDate.month, endDate.day);
 
-    // If the entire requested range is in the past or today
-    if (end.isBefore(today) || end.isAtSameMomentAs(today)) {
+    // Scenario A: Entirely Past -> Local ONLY
+    if (end.isBefore(today)) {
       return await _localStorage.getInRange(start, end);
     }
 
-    // If the entire requested range is in the future (starts tomorrow or later)
-    final tomorrow = today.add(const Duration(days: 1));
-    if (start.isAfter(today)) {
-      return await _fetchFutureRange(start, end);
+    // Scenario B: Entirely Today
+    if (start.isAtSameMomentAs(today) && end.isAtSameMomentAs(today)) {
+      return await _fetchTodayRange(today);
     }
 
-    // --- RANGE STRADDLES TODAY/PAST AND FUTURE ---
-    // Part 1: Past + Today (from Local)
-    final localPartFuture = _localStorage.getInRange(start, today);
+    // Scenario C: Entirely Future -> Direct Calculation
+    if (start.isAfter(today)) {
+      return await _cachingCalculatedStorage.getInRange(start, end);
+    }
 
-    // Part 2: Future Days (from Calculated, cached locally)
-    final remotePartFuture = _fetchFutureRange(tomorrow, end);
+    // Scenario D: Multi-day range spanning across Past / Today / Future
+    final List<Future<List<Day>>> requests = [];
 
-    // Wait for both requests in parallel
-    final results = await Future.wait([localPartFuture, remotePartFuture]);
-    final localDays = results[0];
-    final futureDays = results[1];
+    // Part 1: Past portion -> Local ONLY
+    if (start.isBefore(today)) {
+      final pastEnd = end.isBefore(today) ? end : yesterday;
+      requests.add(_localStorage.getInRange(start, pastEnd));
+    }
 
-    // Combine and return results
-    return [...localDays, ...futureDays];
+    // Part 2: Today portion -> Local FIRST -> Calculated fallback
+    if (!start.isAfter(today) && !end.isBefore(today)) {
+      requests.add(_fetchTodayRange(today));
+    }
+
+    // Part 3: Future portion -> Calculated ONLY
+    if (end.isAfter(today)) {
+      final futureStart = start.isAfter(today) ? start : tomorrow;
+      requests.add(_cachingCalculatedStorage.getInRange(futureStart, end));
+    }
+
+    final results = await Future.wait(requests);
+    return results.expand((list) => list).toList();
   }
 
-  /// Helper to safely load future dates from Calculated storage with local fallback
-  Future<List<Day>> _fetchFutureRange(DateTime start, DateTime end) async {
-    final calculatedDays = await _cachingCalculatedStorage.getInRange(
-      start,
-      end,
-    );
-    if (calculatedDays.isNotEmpty) {
-      return calculatedDays;
-    }
-    return await _localStorage.getInRange(start, end);
+  Future<List<Day>> _fetchTodayRange(DateTime today) async {
+    final day = await load(today);
+    return day != null ? [day] : [];
   }
 }

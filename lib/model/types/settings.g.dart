@@ -44,24 +44,34 @@ const SettingsSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _SettingslanguageEnumValueMap,
     ),
-    r'madhab': PropertySchema(
+    r'latitude': PropertySchema(
       id: 5,
+      name: r'latitude',
+      type: IsarType.double,
+    ),
+    r'longitude': PropertySchema(
+      id: 6,
+      name: r'longitude',
+      type: IsarType.double,
+    ),
+    r'madhab': PropertySchema(
+      id: 7,
       name: r'madhab',
       type: IsarType.byte,
       enumMap: _SettingsmadhabEnumValueMap,
     ),
     r'notifications': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'notifications',
       type: IsarType.bool,
     ),
     r'reminderOffsetInMinutes': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'reminderOffsetInMinutes',
       type: IsarType.long,
     ),
     r'stickyNotifications': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'stickyNotifications',
       type: IsarType.bool,
     )
@@ -100,10 +110,12 @@ void _settingsSerialize(
   writer.writeByte(offsets[2], object.calculationMethod.index);
   writer.writeBool(offsets[3], object.darkMode);
   writer.writeByte(offsets[4], object.language.index);
-  writer.writeByte(offsets[5], object.madhab.index);
-  writer.writeBool(offsets[6], object.notifications);
-  writer.writeLong(offsets[7], object.reminderOffsetInMinutes);
-  writer.writeBool(offsets[8], object.stickyNotifications);
+  writer.writeDouble(offsets[5], object.latitude);
+  writer.writeDouble(offsets[6], object.longitude);
+  writer.writeByte(offsets[7], object.madhab.index);
+  writer.writeBool(offsets[8], object.notifications);
+  writer.writeLong(offsets[9], object.reminderOffsetInMinutes);
+  writer.writeBool(offsets[10], object.stickyNotifications);
 }
 
 Settings _settingsDeserialize(
@@ -123,11 +135,13 @@ Settings _settingsDeserialize(
     language:
         _SettingslanguageValueEnumMap[reader.readByteOrNull(offsets[4])] ??
             Language.en,
-    madhab: _SettingsmadhabValueEnumMap[reader.readByteOrNull(offsets[5])] ??
+    latitude: reader.readDoubleOrNull(offsets[5]) ?? 30.0444,
+    longitude: reader.readDoubleOrNull(offsets[6]) ?? 31.2357,
+    madhab: _SettingsmadhabValueEnumMap[reader.readByteOrNull(offsets[7])] ??
         Madhab.shafi,
-    notifications: reader.readBoolOrNull(offsets[6]) ?? false,
-    reminderOffsetInMinutes: reader.readLongOrNull(offsets[7]) ?? 0,
-    stickyNotifications: reader.readBoolOrNull(offsets[8]) ?? false,
+    notifications: reader.readBoolOrNull(offsets[8]) ?? false,
+    reminderOffsetInMinutes: reader.readLongOrNull(offsets[9]) ?? 0,
+    stickyNotifications: reader.readBoolOrNull(offsets[10]) ?? false,
   );
   object.id = id;
   return object;
@@ -154,13 +168,17 @@ P _settingsDeserializeProp<P>(
       return (_SettingslanguageValueEnumMap[reader.readByteOrNull(offset)] ??
           Language.en) as P;
     case 5:
+      return (reader.readDoubleOrNull(offset) ?? 30.0444) as P;
+    case 6:
+      return (reader.readDoubleOrNull(offset) ?? 31.2357) as P;
+    case 7:
       return (_SettingsmadhabValueEnumMap[reader.readByteOrNull(offset)] ??
           Madhab.shafi) as P;
-    case 6:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
-    case 7:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 8:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 9:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 10:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -540,6 +558,130 @@ extension SettingsQueryFilter
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> latitudeEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> latitudeGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> latitudeLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> latitudeBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'latitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> longitudeEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> longitudeGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> longitudeLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> longitudeBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'longitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterFilterCondition> madhabEqualTo(
       Madhab value) {
     return QueryBuilder.apply(this, (query) {
@@ -740,6 +882,30 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> sortByMadhab() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'madhab', Sort.asc);
@@ -869,6 +1035,30 @@ extension SettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> thenByMadhab() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'madhab', Sort.asc);
@@ -954,6 +1144,18 @@ extension SettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Settings, Settings, QDistinct> distinctByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'latitude');
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QDistinct> distinctByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'longitude');
+    });
+  }
+
   QueryBuilder<Settings, Settings, QDistinct> distinctByMadhab() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'madhab');
@@ -1020,6 +1222,18 @@ extension SettingsQueryProperty
     });
   }
 
+  QueryBuilder<Settings, double, QQueryOperations> latitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'latitude');
+    });
+  }
+
+  QueryBuilder<Settings, double, QQueryOperations> longitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'longitude');
+    });
+  }
+
   QueryBuilder<Settings, Madhab, QQueryOperations> madhabProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'madhab');
@@ -1059,6 +1273,8 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
           (json['reminderOffsetInMinutes'] as num?)?.toInt() ?? 0,
       autoIncrementOptionalPrayerCounterBy:
           (json['autoIncrementOptionalPrayerCounterBy'] as num?)?.toInt() ?? 0,
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 30.0444,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 31.2357,
       language: $enumDecodeNullable(_$LanguageEnumMap, json['language']) ??
           Language.en,
       calculationMethod: $enumDecodeNullable(
@@ -1077,6 +1293,8 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'reminderOffsetInMinutes': instance.reminderOffsetInMinutes,
       'autoIncrementOptionalPrayerCounterBy':
           instance.autoIncrementOptionalPrayerCounterBy,
+      'latitude': instance.latitude,
+      'longitude': instance.longitude,
       'language': _$LanguageEnumMap[instance.language]!,
       'calculationMethod':
           _$CalculationMethodEnumMap[instance.calculationMethod]!,

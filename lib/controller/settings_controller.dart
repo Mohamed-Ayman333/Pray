@@ -38,6 +38,13 @@ class SettingsController extends ChangeNotifier {
 
   // --- MUTATION METHODS ---
 
+  Future<void> updateLocation(double latitude, double longitude) async {
+    await _updateAndSave((s) {
+      s.latitude = latitude;
+      s.longitude = longitude;
+    });
+  }
+
   Future<void> toggleDarkMode(bool enabled) async {
     await _updateAndSave((s) => s.darkMode = enabled);
   }

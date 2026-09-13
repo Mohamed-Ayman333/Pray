@@ -18,6 +18,10 @@ class Settings {
   int reminderOffsetInMinutes;
   int autoIncrementOptionalPrayerCounterBy;
 
+  // Added dynamic location coordinates
+  double latitude;
+  double longitude;
+
   @enumerated
   Language language;
 
@@ -34,6 +38,8 @@ class Settings {
     this.azan = false,
     this.reminderOffsetInMinutes = 0,
     this.autoIncrementOptionalPrayerCounterBy = 0,
+    this.latitude = 30.0444, // Default fallback (e.g., Cairo)
+    this.longitude = 31.2357,
     this.language = Language.en,
     this.calculationMethod = CalculationMethod.egyptian,
     this.madhab = Madhab.shafi,
