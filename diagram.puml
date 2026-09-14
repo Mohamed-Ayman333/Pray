@@ -94,7 +94,6 @@ package model {
             -localStorage: IDaysStorage
             -calculatedStorage: IDaysStorage
 
-            - _isToday(date: DateTime): Boolean
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>

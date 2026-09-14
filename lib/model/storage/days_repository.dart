@@ -47,16 +47,18 @@ class DaysRepository implements IDaysStorage {
       final localDay = await _localStorage.load(date);
       final calculatedDay = await _cachingCalculatedStorage.load(date);
 
-      if (localDay == null) return calculatedDay;
       if (calculatedDay == null) return localDay;
 
-      // Preserve completion state (`isDone`) while taking new calculated prayer times
-      for (final calcPrayer in calculatedDay.prayers) {
-        final existing = localDay.prayers.firstWhere(
-          (p) => p.name.toLowerCase() == calcPrayer.name.toLowerCase(),
-          orElse: () => calcPrayer,
-        );
-        calcPrayer.isDone = existing.isDone;
+      if (localDay != null) {
+        // Preserve ID and completion state (`isDone`) while taking updated calculation times
+        calculatedDay.id = localDay.id;
+        for (final calcPrayer in calculatedDay.prayers) {
+          final existing = localDay.prayers.firstWhere(
+            (p) => p.name.toLowerCase() == calcPrayer.name.toLowerCase(),
+            orElse: () => calcPrayer,
+          );
+          calcPrayer.isDone = existing.isDone;
+        }
       }
 
       return calculatedDay;
@@ -100,7 +102,7 @@ class DaysRepository implements IDaysStorage {
       requests.add(_localStorage.getInRange(start, pastEnd));
     }
 
-    // Part 2: Today portion -> Local FIRST -> Calculated fallback
+    // Part 2: Today portion -> Merged calculation & local progress
     if (!start.isAfter(today) && !end.isBefore(today)) {
       requests.add(_fetchTodayRange(today));
     }
