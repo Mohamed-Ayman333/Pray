@@ -14,6 +14,147 @@ part 'widgets/settings_switch_tile.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
+  /// Helper method to format enum values into user-friendly titles
+  String _formatMethodName(CalculationMethod method) {
+    switch (method) {
+      case CalculationMethod.muslim_world_league:
+        return 'Muslim World League';
+      case CalculationMethod.egyptian:
+        return 'Egyptian General Authority';
+      case CalculationMethod.karachi:
+        return 'University of Islamic Sciences, Karachi';
+      case CalculationMethod.umm_al_qura:
+        return 'Umm Al-Qura University, Makkah';
+      case CalculationMethod.dubai:
+        return 'Dubai';
+      case CalculationMethod.moon_sighting_committee:
+        return 'Moonsighting Committee';
+      case CalculationMethod.north_america:
+        return 'ISNA (North America)';
+      case CalculationMethod.kuwait:
+        return 'Kuwait';
+      case CalculationMethod.qatar:
+        return 'Qatar';
+      case CalculationMethod.singapore:
+        return 'Singapore';
+      case CalculationMethod.tehran:
+        return 'Institute of Geophysics, Tehran';
+      case CalculationMethod.turkey:
+        return 'Diyanet İşleri Başkanlığı, Turkey';
+      case CalculationMethod.other:
+        return 'Other / Custom';
+    }
+  }
+
+  void _showCalculationMethodPicker(
+    BuildContext context,
+    SettingsController controller,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (modalContext) {
+        final colorScheme = Theme.of(modalContext).colorScheme;
+
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.85,
+          builder: (_, scrollController) {
+            return Column(
+              children: [
+                const SizedBox(height: 12),
+                // Handle bar indicator
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 16.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Calculation Method',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.of(modalContext).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: CalculationMethod.values.length,
+                    itemBuilder: (context, index) {
+                      final method = CalculationMethod.values[index];
+                      final isSelected = controller.calculationMethod == method;
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 4,
+                        ),
+                        title: Text(
+                          _formatMethodName(method),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.onSurface,
+                          ),
+                        ),
+                        subtitle: Text(
+                          method.name.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                color: colorScheme.primary,
+                              )
+                            : null,
+                        onTap: () {
+                          controller.updateCalculationMethod(method);
+                          Navigator.of(modalContext).pop();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsController = context.watch<SettingsController>();
@@ -108,9 +249,8 @@ class SettingsPage extends StatelessWidget {
               icon: Icons.menu_book_rounded,
               children: [
                 InkWell(
-                  onTap: () {
-                    // Open Calculation Method Selector Dialog
-                  },
+                  onTap: () =>
+                      _showCalculationMethodPicker(context, settingsController),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(14),
@@ -136,8 +276,9 @@ class SettingsPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                settingsController.calculationMethod.name
-                                    .toUpperCase(),
+                                _formatMethodName(
+                                  settingsController.calculationMethod,
+                                ),
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
