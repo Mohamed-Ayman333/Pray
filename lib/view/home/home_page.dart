@@ -9,13 +9,13 @@ import '../../controller/user_state_controller.dart';
 import '../../model/types/day.dart';
 import '../../model/types/prayer.dart';
 import '../theme/app_colors.dart';
+import 'widgets/theme_toggle_button.dart';
 
 part 'widgets/header_card.dart';
 part 'widgets/view_switcher.dart';
 part 'widgets/days_list.dart';
 part 'widgets/days_table.dart';
 part 'widgets/optional_prayer_counter.dart';
-part 'widgets/theme_toggle_button.dart'; // Added part file
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -142,44 +142,6 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
             ],
           ),
-        ),
-      ),
-      // 6. Material 3 Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: NavigationBar(
-          selectedIndex: 0,
-          onDestinationSelected: (index) {
-            // Handle navigation tab changes
-          },
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.mosque_outlined),
-              selectedIcon: Icon(Icons.mosque),
-              label: 'Prayers',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined),
-              label: 'Calendar',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              label: 'Settings',
-            ),
-          ],
         ),
       ),
     );

@@ -28,8 +28,8 @@ import 'package:pray/controller/days_controller.dart';
 // Import Theme setup
 import 'package:pray/view/theme/app_theme.dart';
 
-// Import Home Page
-import 'package:pray/view/home/home_page.dart';
+// Import Main Shell Wrapper
+import 'package:pray/view/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,7 +74,7 @@ void main() async {
 
   final daysController = DaysController(
     daysRepository: daysRepository,
-    settingsController: settingsController, // Inject SettingsController
+    settingsController: settingsController,
   );
 
   // STEP 5: Initialize persisted states
@@ -135,7 +135,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: const HomePage(),
+      home: const MainShell(),
     );
   }
 }
