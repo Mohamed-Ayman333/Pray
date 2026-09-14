@@ -42,13 +42,24 @@ class DaysRepository implements IDaysStorage {
       return await _localStorage.load(date);
     }
 
-    // 2. Today: Local FIRST -> Calculated fallback (caching to local)
+    // 2. Today: Dynamic Calculation + Preserve User Progress
     if (_isToday(date)) {
       final localDay = await _localStorage.load(date);
-      if (localDay != null) {
-        return localDay;
+      final calculatedDay = await _cachingCalculatedStorage.load(date);
+
+      if (localDay == null) return calculatedDay;
+      if (calculatedDay == null) return localDay;
+
+      // Preserve completion state (`isDone`) while taking new calculated prayer times
+      for (final calcPrayer in calculatedDay.prayers) {
+        final existing = localDay.prayers.firstWhere(
+          (p) => p.name.toLowerCase() == calcPrayer.name.toLowerCase(),
+          orElse: () => calcPrayer,
+        );
+        calcPrayer.isDone = existing.isDone;
       }
-      return await _cachingCalculatedStorage.load(date);
+
+      return calculatedDay;
     }
 
     // 3. Future: Pure Calculation (No local persistence)

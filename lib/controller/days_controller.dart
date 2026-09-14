@@ -1,24 +1,49 @@
 import 'package:flutter/foundation.dart';
+import 'package:pray/controller/settings_controller.dart';
 import 'package:pray/model/storage/i_days_storage.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
 
 class DaysController extends ChangeNotifier {
   final IDaysStorage _daysRepository;
+  final SettingsController _settingsController;
   final Map<DateTime, Day> _loadedDays = {};
 
-  DaysController({required IDaysStorage daysRepository})
-    : _daysRepository = daysRepository;
+  DaysController({
+    required IDaysStorage daysRepository,
+    required SettingsController settingsController,
+  }) : _daysRepository = daysRepository,
+       _settingsController = settingsController {
+    // Listen to changes in SettingsController and invalidate local cache
+    _settingsController.addListener(_onSettingsChanged);
+  }
 
-  /// Public read-only access to loaded days[cite: 13]
+  @override
+  void dispose() {
+    _settingsController.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  /// Automatically trigger cache invalidation and re-fetch when settings update
+  Future<void> _onSettingsChanged() async {
+    await clearAndReload();
+  }
+
+  /// Clears in-memory cache and re-fetches current 30 days window
+  Future<void> clearAndReload() async {
+    _loadedDays.clear();
+    await loadNext30Days();
+  }
+
+  /// Public read-only access to loaded days
   Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
 
-  /// Utility to ensure Map keys are strictly midnight dates[cite: 13]
+  /// Utility to ensure Map keys are strictly midnight dates
   DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
 
-  /// Loads a single day from the repository and updates in-memory cache[cite: 13]
+  /// Loads a single day from the repository and updates in-memory cache
   Future<void> loadDay(DateTime date) async {
     final normalized = _normalizeDate(date);
     final day = await _daysRepository.load(normalized);
@@ -28,7 +53,7 @@ class DaysController extends ChangeNotifier {
     }
   }
 
-  /// Loads a date range from repository and populates in-memory cache[cite: 13]
+  /// Loads a date range from repository and populates in-memory cache
   Future<void> loadDaysInRange(DateTime startDate, DateTime endDate) async {
     final days = await _daysRepository.getInRange(startDate, endDate);
     for (final day in days) {
@@ -40,7 +65,7 @@ class DaysController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retrieves a Day synchronously from the in-memory cache[cite: 13]
+  /// Retrieves a Day synchronously from the in-memory cache
   Day? getDay(DateTime date) {
     return _loadedDays[_normalizeDate(date)];
   }
@@ -57,7 +82,7 @@ class DaysController extends ChangeNotifier {
     return _loadedDays[normalized];
   }
 
-  /// Toggles `isDone` status for a specific prayer and persists to storage[cite: 13]
+  /// Toggles `isDone` status for a specific prayer and persists to storage
   Future<void> togglePrayer(DateTime date, String prayerName) async {
     final normalized = _normalizeDate(date);
     final day = _loadedDays[normalized];
@@ -75,7 +100,7 @@ class DaysController extends ChangeNotifier {
     }
   }
 
-  /// Returns the next upcoming prayer for the current time[cite: 13]
+  /// Returns the next upcoming prayer for the current time
   Prayer? get nextPrayer {
     final now = DateTime.now();
     final today = getDay(now);
@@ -89,7 +114,7 @@ class DaysController extends ChangeNotifier {
       }
     }
 
-    // If all prayers today passed (or today wasn't loaded), check tomorrow's Fajr[cite: 13]
+    // If all prayers today passed (or today wasn't loaded), check tomorrow's Fajr
     final tomorrow = getDay(now.add(const Duration(days: 1)));
     if (tomorrow == null) return null;
 
@@ -100,14 +125,14 @@ class DaysController extends ChangeNotifier {
     }
   }
 
-  /// Calculates remaining time duration until next prayer[cite: 13]
+  /// Calculates remaining time duration until next prayer
   Duration get timeUntilNextPrayer {
     final next = nextPrayer;
     if (next == null || next.time == null) return Duration.zero;
     return next.time!.difference(DateTime.now());
   }
 
-  /// Helper to load the next 30 days into memory for the table view[cite: 13]
+  /// Helper to load the next 30 days into memory for the table view
   Future<void> loadNext30Days() async {
     final today = DateTime.now();
     final startDate = DateTime(today.year, today.month, today.day);

@@ -175,15 +175,27 @@ package controller {
         + <<get>> isInitialized: Boolean
         + <<get>> currentSettings: Settings
         + <<get>> isDarkMode: Boolean
+        + <<get>> calculationMethod: CalculationMethod
+        + <<get>> madhab: Madhab
+        + <<get>> language: Language
+        + <<get>> notifications: Boolean
+        + <<get>> stickyNotifications: Boolean
+        + <<get>> azan: Boolean
+        + <<get>> reminderOffsetInMinutes: Integer
+        + <<get>> autoIncrementOptionalPrayerCounterBy: Integer
         + init(): Future<void>
         - _updateAndSave(update: Function): Future<void>
         + updateLocation(latitude: Double, longitude: Double): Future<void>
-        + tuggleTheme(): Future<void>
+        + setDarkMode(enabled: Boolean): Future<void>
         + toggleNotifications(enabled: Boolean): Future<void>
         + toggleStickyNotifications(enabled: Boolean): Future<void>
         + toggleAzan(enabled: Boolean): Future<void>
         + updateReminderOffset(minutes: Integer): Future<void>
+        + incrementReminderOffset(): Future<void>
+        + decrementReminderOffset(): Future<void>
         + updateAutoIncrementOptionalPrayerCounterBy(value: Integer): Future<void>
+        + incrementAutoIncrementvalue(): Future<void>
+        + decrementAutoIncrementvalue(): Future<void>
         + updateLanguage(language: Language): Future<void>
         + updateCalculationMethod(method: CalculationMethod): Future<void>
         + updateMadhab(madhab: Madhab): Future<void>
@@ -206,7 +218,11 @@ package controller {
     class DaysController {
         - _daysRepository: IDaysStorage
         - _loadedDays: Map<DateTime, Day>
+        - _settingsController: SettingsController
 
+        + dispose(): void
+        - _onSettingsChanged(): Future<void>
+        + clearAndReload(): Future<void>
         + <<get>> loadedDays: Map<DateTime, Day>
         - _normalizeDate(date: DateTime): DateTime
         + loadDay(date: DateTime): Future<void>
@@ -221,6 +237,7 @@ package controller {
 
     DaysController "1" --> "1" IDaysStorage
     DaysController "1" o-- "*" Day
+    DaysController "1" --> "1" SettingsController
     SettingsController "1" --> "1" SettingsRepository
     SettingsController "1" o-- "1" Settings
     UserStateController "1" --> "1" UserStateRepository

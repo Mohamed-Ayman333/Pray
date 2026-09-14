@@ -92,7 +92,9 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.only(right: 8.0),
             child: ThemeToggleButton(
               isDarkMode: settingsController.isDarkMode,
-              onToggleTheme: () => settingsController.toggleTheme(),
+              onToggleTheme: () => settingsController.setDarkMode(
+                !settingsController.isDarkMode,
+              ),
             ),
           ),
         ],

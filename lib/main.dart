@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 // Import Database helper
@@ -28,7 +29,7 @@ import 'package:pray/controller/days_controller.dart';
 import 'package:pray/view/theme/app_theme.dart';
 
 // Import Home Page
-import 'package:pray/view/ui/home_page.dart';
+import 'package:pray/view/home/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,14 +71,20 @@ void main() async {
     localStorage: localDaysStorage,
     cachingCalculatedStorage: cachingDaysStorage,
   );
-  final daysController = DaysController(daysRepository: daysRepository);
 
-  // STEP 5: Initialize persisted states & cache today's prayers
-  await Future.wait([
-    settingsController.init(),
-    userStateController.init(),
-    daysController.loadNext30Days(),
-  ]);
+  final daysController = DaysController(
+    daysRepository: daysRepository,
+    settingsController: settingsController, // Inject SettingsController
+  );
+
+  // STEP 5: Initialize persisted states
+  await Future.wait([settingsController.init(), userStateController.init()]);
+
+  // Attempt background location update (does not block initial load)
+  _refreshLocationInBackground(settingsController);
+
+  // Load cached or initially calculated 30 days
+  await daysController.loadNext30Days();
 
   runApp(
     MultiProvider(
@@ -89,6 +96,29 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+Future<void> _refreshLocationInBackground(SettingsController settings) async {
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    if (permission == LocationPermission.deniedForever) return;
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+    );
+
+    await settings.updateLocation(position.latitude, position.longitude);
+  } catch (_) {
+    // Fail silently to keep app responsive and offline-ready
+  }
 }
 
 class MyApp extends StatelessWidget {
