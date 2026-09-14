@@ -211,7 +211,11 @@ package controller {
         + loadDay(date: DateTime): Future<void>
         + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
         + getDay(date: DateTime): Day?
+        + getOrLoadDay(date: DateTime): Future<Day>
         + togglePrayer(date: DateTime, prayerName: String): Future<void>
+        +<<get>> nextPrayer: Prayer?
+        + <<get>> timeUntilNextPrayer: Duration
+        + loadNext30Days(): Future<void>
     }
 
     DaysController "1" --> "1" IDaysStorage

@@ -76,7 +76,7 @@ void main() async {
   await Future.wait([
     settingsController.init(),
     userStateController.init(),
-    daysController.loadDay(DateTime.now()),
+    daysController.loadNext30Days(),
   ]);
 
   runApp(
