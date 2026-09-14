@@ -174,10 +174,11 @@ package controller {
 
         + <<get>> isInitialized: Boolean
         + <<get>> currentSettings: Settings
+        + <<get>> isDarkMode: Boolean
         + init(): Future<void>
         - _updateAndSave(update: Function): Future<void>
         + updateLocation(latitude: Double, longitude: Double): Future<void>
-        + toggleDarkMode(enabled: Boolean): Future<void>
+        + tuggleTheme(): Future<void>
         + toggleNotifications(enabled: Boolean): Future<void>
         + toggleStickyNotifications(enabled: Boolean): Future<void>
         + toggleAzan(enabled: Boolean): Future<void>

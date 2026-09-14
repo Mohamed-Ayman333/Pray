@@ -13,9 +13,11 @@ class SettingsController extends ChangeNotifier {
     : _settingsRepository = settingsRepository {
     _currentSettings = Settings();
   }
+  // --- GETTERS ---
 
   bool get isInitialized => _isInitialized;
   Settings get currentSettings => _currentSettings;
+  bool get isDarkMode => _currentSettings.darkMode;
 
   /// Loads persisted settings from local storage on app initialization
   Future<void> init() async {
@@ -45,8 +47,9 @@ class SettingsController extends ChangeNotifier {
     });
   }
 
-  Future<void> toggleDarkMode(bool enabled) async {
-    await _updateAndSave((s) => s.darkMode = enabled);
+  /// Toggles dark mode on/off and persists the state
+  Future<void> toggleTheme() async {
+    await _updateAndSave((s) => s.darkMode = !s.darkMode);
   }
 
   Future<void> toggleNotifications(bool enabled) async {
