@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
         centerTitle: false,
         title: Row(
           children: [
-            Image.asset('assets/images/logo.png', height: 32),
+            Image.asset('assets/images/logo.jpg', height: 32),
             const SizedBox(width: 12),
             Text(
               'Pray',
