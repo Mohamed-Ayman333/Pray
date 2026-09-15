@@ -52,6 +52,129 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
     _loadData();
   }
 
+  void _showMonthYearPicker(BuildContext context, ColorScheme colorScheme) {
+    int tempYear = _selectedMonth.year;
+    final now = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final months = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: tempYear > 2020
+                            ? () => setModalState(() => tempYear--)
+                            : null,
+                      ),
+                      Text(
+                        '$tempYear',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: tempYear < now.year
+                            ? () => setModalState(() => tempYear++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: 12,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          childAspectRatio: 1.8,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemBuilder: (context, index) {
+                      final monthNum = index + 1;
+                      final isSelected =
+                          tempYear == _selectedMonth.year &&
+                          monthNum == _selectedMonth.month;
+                      final isFuture =
+                          tempYear == now.year && monthNum > now.month;
+
+                      return InkWell(
+                        onTap: isFuture
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                                _onMonthChanged(
+                                  DateTime.utc(tempYear, monthNum, 1),
+                                );
+                              },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.surfaceContainerHigh.withValues(
+                                    alpha: 0.5,
+                                  ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            months[index],
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isFuture
+                                  ? colorScheme.onSurface.withValues(alpha: 0.3)
+                                  : (isSelected
+                                        ? colorScheme.onPrimary
+                                        : colorScheme.onSurface),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settingsController = context.watch<SettingsController>();
@@ -193,52 +316,61 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
   }
 
   Widget _buildMonthDropdown(BuildContext context, ColorScheme colorScheme) {
+    final now = DateTime.now();
+    final isCurrentMonth =
+        _selectedMonth.year == now.year && _selectedMonth.month == now.month;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: PopupMenuButton<DateTime>(
-        initialValue: _selectedMonth,
-        onSelected: _onMonthChanged,
-        offset: const Offset(0, 40),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 16,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              DateFormat('MMMM yyyy').format(_selectedMonth),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left, size: 20),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            onPressed: () {
+              _onMonthChanged(
+                DateTime.utc(_selectedMonth.year, _selectedMonth.month - 1, 1),
+              );
+            },
+          ),
+          InkWell(
+            onTap: () => _showMonthYearPicker(context, colorScheme),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                DateFormat('MMMM yyyy').format(_selectedMonth),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down,
-              size: 18,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-        itemBuilder: (context) {
-          final now = DateTime.now();
-          return List.generate(12, (index) {
-            final date = DateTime.utc(now.year, now.month - index, 1);
-            return PopupMenuItem<DateTime>(
-              value: date,
-              child: Text(DateFormat('MMMM yyyy').format(date)),
-            );
-          });
-        },
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, size: 20),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            onPressed: isCurrentMonth
+                ? null
+                : () {
+                    _onMonthChanged(
+                      DateTime.utc(
+                        _selectedMonth.year,
+                        _selectedMonth.month + 1,
+                        1,
+                      ),
+                    );
+                  },
+          ),
+        ],
       ),
     );
   }
