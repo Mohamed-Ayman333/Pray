@@ -13,20 +13,20 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
-
-  // List of root navigation destinations
-  final List<Widget> _pages = const [
-    HomePage(),
-    PrayerCalendarPage(),
-    SettingsPage(),
-  ];
+  final GlobalKey<PrayerCalendarPageState> _calendarKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final List<Widget> pages = [
+      const HomePage(),
+      PrayerCalendarPage(key: _calendarKey),
+      const SettingsPage(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -45,9 +45,12 @@ class _MainShellState extends State<MainShell> {
         child: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
+            if (_selectedIndex != index) {
+              _calendarKey.currentState?.resetView();
+              setState(() {
+                _selectedIndex = index;
+              });
+            }
           },
           destinations: const [
             NavigationDestination(

@@ -11,10 +11,10 @@ class PrayerCalendarPage extends StatefulWidget {
   const PrayerCalendarPage({super.key});
 
   @override
-  State<PrayerCalendarPage> createState() => _PrayerCalendarPageState();
+  State<PrayerCalendarPage> createState() => PrayerCalendarPageState();
 }
 
-class _PrayerCalendarPageState extends State<PrayerCalendarPage> {
+class PrayerCalendarPageState extends State<PrayerCalendarPage> {
   late DateTime _selectedMonth;
   DateTime? _selectedDayForQada;
   bool _isLoading = false;
@@ -24,6 +24,15 @@ class _PrayerCalendarPageState extends State<PrayerCalendarPage> {
     super.initState();
     final now = DateTime.now();
     _selectedMonth = DateTime.utc(now.year, now.month, 1);
+  }
+
+  /// Explicit reset method called when switching tabs or resetting view.
+  void resetView() {
+    if (_selectedDayForQada != null) {
+      setState(() {
+        _selectedDayForQada = null;
+      });
+    }
   }
 
   Future<void> _loadData() async {
@@ -132,30 +141,26 @@ class _PrayerCalendarPageState extends State<PrayerCalendarPage> {
 
     return Row(
       children: [
-        InkWell(
-          onTap: () {
-            if (_selectedDayForQada != null) {
-              setState(() => _selectedDayForQada = null);
-            } else {
-              Navigator.of(context).maybePop();
-            }
-          },
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHigh,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.arrow_back,
-              color: colorScheme.onSurface,
-              size: 20,
+        if (_selectedDayForQada != null) ...[
+          InkWell(
+            onTap: () => setState(() => _selectedDayForQada = null),
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHigh,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.arrow_back,
+                color: colorScheme.onSurface,
+                size: 20,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 16),
+          const SizedBox(width: 16),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
