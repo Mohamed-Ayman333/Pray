@@ -83,8 +83,12 @@ void main() async {
   // Attempt background location update (does not block initial load)
   _refreshLocationInBackground(settingsController);
 
-  // Load cached or initially calculated 30 days
-  await daysController.loadNext30Days();
+  // Pre-load current month history and upcoming 30 days into memory cache
+  final now = DateTime.now();
+  await Future.wait([
+    daysController.loadMonth(now),
+    daysController.loadNext30Days(),
+  ]);
 
   runApp(
     MultiProvider(

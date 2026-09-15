@@ -29,13 +29,15 @@ class DaysController extends ChangeNotifier {
 
   Future<void> clearAndReload() async {
     _loadedDays.clear();
-    await loadNext30Days();
+    final now = DateTime.now();
+    await Future.wait([loadMonth(now), loadNext30Days()]);
   }
 
   Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
 
+  /// Converts any DateTime to UTC Midnight (00:00:00.000Z) to match Isar storage format
   DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+    return DateTime.utc(date.year, date.month, date.day);
   }
 
   Future<void> loadDay(DateTime date) async {
@@ -50,7 +52,21 @@ class DaysController extends ChangeNotifier {
   }
 
   Future<void> loadDaysInRange(DateTime startDate, DateTime endDate) async {
-    final days = await _daysRepository.getInRange(startDate, endDate);
+    final startNormalized = _normalizeDate(startDate);
+    final endNormalized = DateTime.utc(
+      endDate.year,
+      endDate.month,
+      endDate.day,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    final days = await _daysRepository.getInRange(
+      startNormalized,
+      endNormalized,
+    );
     for (final day in days) {
       if (day.date != null) {
         final normalized = _normalizeDate(day.date!);
@@ -63,17 +79,39 @@ class DaysController extends ChangeNotifier {
   /// Loads historical days for a given calendar month (capped at today)
   Future<void> loadMonth(DateTime monthDate) async {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = _normalizeDate(now);
 
-    final startDate = DateTime(monthDate.year, monthDate.month, 1);
-    var endDate = DateTime(monthDate.year, monthDate.month + 1, 0);
+    final startDate = DateTime.utc(monthDate.year, monthDate.month, 1);
 
-    // Skip loading future dates since they cannot have missed prayers
-    if (endDate.isAfter(today)) {
-      endDate = today;
-    }
+    // Get last day of the target month
+    final lastDayOfMonth = DateTime.utc(
+      monthDate.year,
+      monthDate.month + 1,
+      0,
+    ).day;
+    var endDate = DateTime.utc(
+      monthDate.year,
+      monthDate.month,
+      lastDayOfMonth,
+      23,
+      59,
+      59,
+      999,
+    );
 
     if (startDate.isAfter(today)) return;
+
+    if (endDate.isAfter(today)) {
+      endDate = DateTime.utc(
+        today.year,
+        today.month,
+        today.day,
+        23,
+        59,
+        59,
+        999,
+      );
+    }
 
     await loadDaysInRange(startDate, endDate);
   }
@@ -93,20 +131,17 @@ class DaysController extends ChangeNotifier {
     return _loadedDays[normalized];
   }
 
-  /// Returns the number of missed prayers for a specific date.
-  /// A `null` entry in the past implies 0 pending prayers (all completed and optimized away)[cite: 26].
   int getMissedPrayersCount(DateTime date) {
     final normalized = _normalizeDate(date);
     final day = getDay(normalized);
 
     if (day == null) {
-      return 0; // Completed past day or future date
+      return 0;
     }
 
     return day.pendingPrayers.length;
   }
 
-  /// Returns `true` if all prayers for the given date are completed.
   bool isDayFullyCompleted(DateTime date) {
     return getMissedPrayersCount(date) == 0;
   }
@@ -159,7 +194,7 @@ class DaysController extends ChangeNotifier {
 
   Future<void> loadNext30Days() async {
     final today = DateTime.now();
-    final startDate = DateTime(today.year, today.month, today.day);
+    final startDate = _normalizeDate(today);
     final endDate = startDate.add(const Duration(days: 30));
     await loadDaysInRange(startDate, endDate);
   }

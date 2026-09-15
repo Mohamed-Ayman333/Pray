@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'calendar/calendar_page.dart';
 import 'home/home_page.dart';
 import 'settings/settings_page.dart';
 
@@ -16,8 +17,7 @@ class _MainShellState extends State<MainShell> {
   // List of root navigation destinations
   final List<Widget> _pages = const [
     HomePage(),
-    // Replace Center widget with your CalendarPage when available
-    Center(child: Text('Calendar')),
+    PrayerCalendarPage(),
     SettingsPage(),
   ];
 
