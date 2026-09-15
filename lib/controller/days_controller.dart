@@ -14,7 +14,6 @@ class DaysController extends ChangeNotifier {
     required SettingsController settingsController,
   }) : _daysRepository = daysRepository,
        _settingsController = settingsController {
-    // Listen to changes in SettingsController and invalidate local cache
     _settingsController.addListener(_onSettingsChanged);
   }
 
@@ -24,36 +23,32 @@ class DaysController extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Automatically trigger cache invalidation and re-fetch when settings update
   Future<void> _onSettingsChanged() async {
     await clearAndReload();
   }
 
-  /// Clears in-memory cache and re-fetches current 30 days window
   Future<void> clearAndReload() async {
     _loadedDays.clear();
     await loadNext30Days();
   }
 
-  /// Public read-only access to loaded days
   Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
 
-  /// Utility to ensure Map keys are strictly midnight dates
   DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
 
-  /// Loads a single day from the repository and updates in-memory cache
   Future<void> loadDay(DateTime date) async {
     final normalized = _normalizeDate(date);
     final day = await _daysRepository.load(normalized);
     if (day != null) {
       _loadedDays[normalized] = day;
-      notifyListeners();
+    } else {
+      _loadedDays.remove(normalized);
     }
+    notifyListeners();
   }
 
-  /// Loads a date range from repository and populates in-memory cache
   Future<void> loadDaysInRange(DateTime startDate, DateTime endDate) async {
     final days = await _daysRepository.getInRange(startDate, endDate);
     for (final day in days) {
@@ -65,12 +60,28 @@ class DaysController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retrieves a Day synchronously from the in-memory cache
+  /// Loads historical days for a given calendar month (capped at today)
+  Future<void> loadMonth(DateTime monthDate) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final startDate = DateTime(monthDate.year, monthDate.month, 1);
+    var endDate = DateTime(monthDate.year, monthDate.month + 1, 0);
+
+    // Skip loading future dates since they cannot have missed prayers
+    if (endDate.isAfter(today)) {
+      endDate = today;
+    }
+
+    if (startDate.isAfter(today)) return;
+
+    await loadDaysInRange(startDate, endDate);
+  }
+
   Day? getDay(DateTime date) {
     return _loadedDays[_normalizeDate(date)];
   }
 
-  /// Synchronously gets from cache, or asynchronously loads and caches on miss
   Future<Day?> getOrLoadDay(DateTime date) async {
     final normalized = _normalizeDate(date);
 
@@ -82,7 +93,24 @@ class DaysController extends ChangeNotifier {
     return _loadedDays[normalized];
   }
 
-  /// Toggles `isDone` status for a specific prayer and persists to storage
+  /// Returns the number of missed prayers for a specific date.
+  /// A `null` entry in the past implies 0 pending prayers (all completed and optimized away)[cite: 26].
+  int getMissedPrayersCount(DateTime date) {
+    final normalized = _normalizeDate(date);
+    final day = getDay(normalized);
+
+    if (day == null) {
+      return 0; // Completed past day or future date
+    }
+
+    return day.pendingPrayers.length;
+  }
+
+  /// Returns `true` if all prayers for the given date are completed.
+  bool isDayFullyCompleted(DateTime date) {
+    return getMissedPrayersCount(date) == 0;
+  }
+
   Future<void> togglePrayer(DateTime date, String prayerName) async {
     final normalized = _normalizeDate(date);
     final day = _loadedDays[normalized];
@@ -100,7 +128,6 @@ class DaysController extends ChangeNotifier {
     }
   }
 
-  /// Returns the next upcoming prayer for the current time
   Prayer? get nextPrayer {
     final now = DateTime.now();
     final today = getDay(now);
@@ -114,7 +141,6 @@ class DaysController extends ChangeNotifier {
       }
     }
 
-    // If all prayers today passed (or today wasn't loaded), check tomorrow's Fajr
     final tomorrow = getDay(now.add(const Duration(days: 1)));
     if (tomorrow == null) return null;
 
@@ -125,14 +151,12 @@ class DaysController extends ChangeNotifier {
     }
   }
 
-  /// Calculates remaining time duration until next prayer
   Duration get timeUntilNextPrayer {
     final next = nextPrayer;
     if (next == null || next.time == null) return Duration.zero;
     return next.time!.difference(DateTime.now());
   }
 
-  /// Helper to load the next 30 days into memory for the table view
   Future<void> loadNext30Days() async {
     final today = DateTime.now();
     final startDate = DateTime(today.year, today.month, today.day);

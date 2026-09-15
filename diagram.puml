@@ -226,8 +226,11 @@ package controller {
         - _normalizeDate(date: DateTime): DateTime
         + loadDay(date: DateTime): Future<void>
         + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
+        + loadMonth(monthDate: DateTime): Future<void>
         + getDay(date: DateTime): Day?
         + getOrLoadDay(date: DateTime): Future<Day>
+        + getMissedPrayersCount(date: DateTime): Integer
+        + isDayFullyCompleted(date: DateTime): Boolean
         + togglePrayer(date: DateTime, prayerName: String): Future<void>
         +<<get>> nextPrayer: Prayer?
         + <<get>> timeUntilNextPrayer: Duration
