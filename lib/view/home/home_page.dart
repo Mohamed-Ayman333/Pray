@@ -56,7 +56,8 @@ class _HomePageState extends State<HomePage> {
     }
 
     final today = DateTime.now();
-    final dayData = daysController.getDay(today);
+    final todayNormalized = DateTime.utc(today.year, today.month, today.day);
+    final dayData = daysController.getDay(todayNormalized);
 
     // Get Next Prayer info safely
     final nextPrayer = daysController.nextPrayer;

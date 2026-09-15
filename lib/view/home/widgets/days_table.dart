@@ -11,10 +11,15 @@ class DaysTable extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final today = DateTime.now();
-    final todayTruncated = DateTime(today.year, today.month, today.day);
+    // Normalize to UTC midnight to match DaysController key format
+    final todayTruncated = DateTime.utc(today.year, today.month, today.day);
 
     final displayDates = List.generate(31, (index) {
-      return todayTruncated.add(Duration(days: index));
+      return DateTime.utc(
+        todayTruncated.year,
+        todayTruncated.month,
+        todayTruncated.day + index,
+      );
     });
 
     if (loadedDays.isEmpty) {
