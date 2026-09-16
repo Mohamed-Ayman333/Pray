@@ -3,19 +3,20 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     hide Day;
+import 'package:isar/isar.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'package:pray/core/app_core.dart';
 import 'package:pray/model/storage/app_database.dart';
-
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
+
   debugPrint(
     '[notif-bg] fired: actionId=${response.actionId} payload=${response.payload}',
   );
@@ -23,13 +24,19 @@ void notificationTapBackground(NotificationResponse response) async {
   if (response.actionId == 'mark_done_action' && response.payload != null) {
     final parts = response.payload!.split('|');
     if (parts.length == 2) {
-      final date = DateTime.parse(parts[0]);
+      final parsedDate = DateTime.parse(parts[0]);
+      final date = DateTime.utc(
+        parsedDate.year,
+        parsedDate.month,
+        parsedDate.day,
+      );
       final prayerName = parts[1];
 
       try {
-        final isar = await AppDatabase.init();
+        final isar = Isar.getInstance() ?? await AppDatabase.init();
         final core = await buildAppCore(isar);
         await core.daysRepository.togglePrayer(date, prayerName);
+
         debugPrint(
           '[notif-bg] togglePrayer succeeded for $prayerName on $date',
         );
@@ -38,10 +45,6 @@ void notificationTapBackground(NotificationResponse response) async {
           '[notif-bg] Error handling background notification tap: $e\n$st',
         );
       }
-    } else {
-      debugPrint(
-        '[notif-bg] payload did not split into 2 parts: ${response.payload}',
-      );
     }
   }
 }
@@ -90,11 +93,23 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    await _plugin
+    // Explicitly create high-importance notification channel for Android
+    final androidImplementation = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+        >();
+
+    if (androidImplementation != null) {
+      const channel = AndroidNotificationChannel(
+        'prayer_channel',
+        'Prayer Reminders',
+        description: 'Notifications for upcoming prayer times',
+        importance: Importance.max,
+      );
+      await androidImplementation.createNotificationChannel(channel);
+      await androidImplementation.requestNotificationsPermission();
+      await androidImplementation.requestExactAlarmsPermission();
+    }
 
     await _plugin
         .resolvePlatformSpecificImplementation<
@@ -113,8 +128,6 @@ class NotificationService {
 
     int notificationId = 0;
     final now = DateTime.now();
-    // Whether the notification should keep repeating its sound/vibration
-    // until the user dismisses or acts on it, instead of firing once.
     final repeatSound = settings.reminderOffsetInMinutes > 0;
 
     for (final day in days) {
@@ -148,44 +161,76 @@ class NotificationService {
   }) async {
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
-    await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tzTime,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'prayer_channel',
-          'Prayer Reminders',
-          channelDescription: 'Notifications for upcoming prayer times',
-          importance: Importance.max,
-          priority: Priority.high,
-          ongoing: settings.stickyNotifications,
-          autoCancel: !settings.stickyNotifications,
-          // FLAG_INSISTENT (4): Android keeps replaying this notification's
-          // sound/vibration on this SAME notification until the user
-          // dismisses it or taps an action, instead of only alerting once.
-          additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
-          actions: const [
-            AndroidNotificationAction(
-              'mark_done_action',
-              'Mark as Done',
-              showsUserInterface: false,
-            ),
-          ],
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzTime,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'prayer_channel',
+            'Prayer Reminders',
+            channelDescription: 'Notifications for upcoming prayer times',
+            importance: Importance.max,
+            priority: Priority.high,
+            ongoing: settings.stickyNotifications,
+            autoCancel: !settings.stickyNotifications,
+            additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
+            actions: const [
+              AndroidNotificationAction(
+                'mark_done_action',
+                'Mark as Done',
+                showsUserInterface: true,
+                cancelNotification: true,
+              ),
+            ],
+          ),
+          iOS: const DarwinNotificationDetails(
+            categoryIdentifier: 'PRAYER_CATEGORY',
+          ),
         ),
-        // Note: iOS has no equivalent to FLAG_INSISTENT — Apple only
-        // allows a notification's sound to play once, so repeatSound
-        // only has an effect on Android.
-        iOS: const DarwinNotificationDetails(
-          categoryIdentifier: 'PRAYER_CATEGORY',
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (_) {
+      // Fallback to inexact scheduling if exact alarm permission is denied
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzTime,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'prayer_channel',
+            'Prayer Reminders',
+            channelDescription: 'Notifications for upcoming prayer times',
+            importance: Importance.max,
+            priority: Priority.high,
+            ongoing: settings.stickyNotifications,
+            autoCancel: !settings.stickyNotifications,
+            additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
+            actions: const [
+              AndroidNotificationAction(
+                'mark_done_action',
+                'Mark as Done',
+                showsUserInterface: true,
+                cancelNotification: true,
+              ),
+            ],
+          ),
+          iOS: const DarwinNotificationDetails(
+            categoryIdentifier: 'PRAYER_CATEGORY',
+          ),
         ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    }
   }
 
   Future<void> cancelAll() async {
