@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:pray/controller/settings_controller.dart';
-import 'package:pray/controller/user_state_controller.dart';
 import 'package:pray/model/storage/i_days_storage.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
@@ -9,24 +8,19 @@ import 'package:pray/service/notification_service.dart';
 class DaysController extends ChangeNotifier {
   final IDaysStorage _daysRepository;
   final SettingsController _settingsController;
-  final UserStateController _userStateController;
   final Map<DateTime, Day> _loadedDays = {};
 
   DaysController({
     required IDaysStorage daysRepository,
     required SettingsController settingsController,
-    required UserStateController userStateController,
   }) : _daysRepository = daysRepository,
-       _settingsController = settingsController,
-       _userStateController = userStateController {
+       _settingsController = settingsController {
     _settingsController.addListener(_onSettingsChanged);
-    _userStateController.addListener(_onUserStateChanged);
   }
 
   @override
   void dispose() {
     _settingsController.removeListener(_onSettingsChanged);
-    _userStateController.removeListener(_onUserStateChanged);
     super.dispose();
   }
 
@@ -34,19 +28,13 @@ class DaysController extends ChangeNotifier {
     await clearAndReload();
   }
 
-  Future<void> _onUserStateChanged() async {
-    await syncNotifications();
-  }
-
   Future<void> syncNotifications() async {
     final settings = _settingsController.currentSettings;
-    final userState = _userStateController.currentUserState;
     final upcomingDays = _loadedDays.values.toList();
 
     await NotificationService.instance.schedulePrayerNotifications(
       upcomingDays,
       settings,
-      userState,
     );
   }
 

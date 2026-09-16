@@ -70,7 +70,7 @@ void main() async {
     localStorage: localDaysStorage,
   );
 
-  // STEP 4: Build Days repository and controller (Pass userStateController)
+  // STEP 4: Build Days repository and controller
   final daysRepository = DaysRepository(
     localStorage: localDaysStorage,
     cachingCalculatedStorage: cachingDaysStorage,
@@ -79,7 +79,6 @@ void main() async {
   final daysController = DaysController(
     daysRepository: daysRepository,
     settingsController: settingsController,
-    userStateController: userStateController,
   );
 
   // STEP 5: Initialize persisted states
