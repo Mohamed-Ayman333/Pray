@@ -17,8 +17,13 @@ const UserStateSchema = CollectionSchema(
   name: r'UserState',
   id: -3052082333501167064,
   properties: {
-    r'optionalPrayerCounter': PropertySchema(
+    r'hasPromptedBatteryExemption': PropertySchema(
       id: 0,
+      name: r'hasPromptedBatteryExemption',
+      type: IsarType.bool,
+    ),
+    r'optionalPrayerCounter': PropertySchema(
+      id: 1,
       name: r'optionalPrayerCounter',
       type: IsarType.long,
     )
@@ -52,7 +57,8 @@ void _userStateSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.optionalPrayerCounter);
+  writer.writeBool(offsets[0], object.hasPromptedBatteryExemption);
+  writer.writeLong(offsets[1], object.optionalPrayerCounter);
 }
 
 UserState _userStateDeserialize(
@@ -62,7 +68,8 @@ UserState _userStateDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = UserState(
-    optionalPrayerCounter: reader.readLongOrNull(offsets[0]) ?? 0,
+    hasPromptedBatteryExemption: reader.readBoolOrNull(offsets[0]) ?? false,
+    optionalPrayerCounter: reader.readLongOrNull(offsets[1]) ?? 0,
   );
   object.id = id;
   return object;
@@ -76,6 +83,8 @@ P _userStateDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 1:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -173,6 +182,16 @@ extension UserStateQueryWhere
 
 extension UserStateQueryFilter
     on QueryBuilder<UserState, UserState, QFilterCondition> {
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      hasPromptedBatteryExemptionEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasPromptedBatteryExemption',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<UserState, UserState, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -291,6 +310,20 @@ extension UserStateQueryLinks
 
 extension UserStateQuerySortBy on QueryBuilder<UserState, UserState, QSortBy> {
   QueryBuilder<UserState, UserState, QAfterSortBy>
+      sortByHasPromptedBatteryExemption() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPromptedBatteryExemption', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
+      sortByHasPromptedBatteryExemptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPromptedBatteryExemption', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
       sortByOptionalPrayerCounter() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'optionalPrayerCounter', Sort.asc);
@@ -307,6 +340,20 @@ extension UserStateQuerySortBy on QueryBuilder<UserState, UserState, QSortBy> {
 
 extension UserStateQuerySortThenBy
     on QueryBuilder<UserState, UserState, QSortThenBy> {
+  QueryBuilder<UserState, UserState, QAfterSortBy>
+      thenByHasPromptedBatteryExemption() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPromptedBatteryExemption', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
+      thenByHasPromptedBatteryExemptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasPromptedBatteryExemption', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserState, UserState, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -337,6 +384,13 @@ extension UserStateQuerySortThenBy
 extension UserStateQueryWhereDistinct
     on QueryBuilder<UserState, UserState, QDistinct> {
   QueryBuilder<UserState, UserState, QDistinct>
+      distinctByHasPromptedBatteryExemption() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasPromptedBatteryExemption');
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QDistinct>
       distinctByOptionalPrayerCounter() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'optionalPrayerCounter');
@@ -349,6 +403,13 @@ extension UserStateQueryProperty
   QueryBuilder<UserState, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<UserState, bool, QQueryOperations>
+      hasPromptedBatteryExemptionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasPromptedBatteryExemption');
     });
   }
 
@@ -367,9 +428,12 @@ extension UserStateQueryProperty
 UserState _$UserStateFromJson(Map<String, dynamic> json) => UserState(
       optionalPrayerCounter:
           (json['optionalPrayerCounter'] as num?)?.toInt() ?? 0,
+      hasPromptedBatteryExemption:
+          json['hasPromptedBatteryExemption'] as bool? ?? false,
     )..id = (json['id'] as num).toInt();
 
 Map<String, dynamic> _$UserStateToJson(UserState instance) => <String, dynamic>{
       'id': instance.id,
       'optionalPrayerCounter': instance.optionalPrayerCounter,
+      'hasPromptedBatteryExemption': instance.hasPromptedBatteryExemption,
     };

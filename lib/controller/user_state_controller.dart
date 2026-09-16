@@ -57,4 +57,15 @@ class UserStateController extends ChangeNotifier {
       s.optionalPrayerCounter = value < 0 ? 0 : value;
     });
   }
+
+  /// Records that the user has already been shown the battery-optimization
+  /// exemption prompt, so it is only ever displayed once per install.
+  ///
+  /// No-op if already true, to avoid a redundant Isar write.
+  Future<void> markBatteryExemptionPrompted() async {
+    if (_currentUserState.hasPromptedBatteryExemption) return;
+    await _updateAndSave((s) {
+      s.hasPromptedBatteryExemption = true;
+    });
+  }
 }

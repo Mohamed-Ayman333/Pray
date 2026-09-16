@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     hide Day;
@@ -21,7 +22,7 @@ void notificationTapBackground(NotificationResponse response) async {
     '[notif-bg] fired: actionId=${response.actionId} payload=${response.payload}',
   );
 
-  if (response.actionId == 'mark_done_action' && response.payload != null) {
+  if (response.payload != null) {
     final parts = response.payload!.split('|');
     if (parts.length == 2) {
       final parsedDate = DateTime.parse(parts[0]);
@@ -53,16 +54,33 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
+  static const String _channelId = 'prayer_channel';
+  static const String _channelName = 'Prayer Reminders';
+  static const String _channelDescription =
+      'Notifications for upcoming prayer times';
+
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
 
-  Future<void> init({
-    void Function(NotificationResponse)? onNotificationResponse,
-  }) async {
-    tz.initializeTimeZones();
-    final String timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+  bool _initialized = false;
 
+  Future<void> init({
+    required Function(NotificationResponse) onNotificationResponse,
+  }) async {
+    if (_initialized) return;
+
+    // ---- Timezone setup ----
+    tz.initializeTimeZones();
+    try {
+      final String timeZoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      debugPrint('[notif] timezone set to $timeZoneName');
+    } catch (e) {
+      debugPrint('[notif] failed to resolve timezone, falling back to UTC: $e');
+      tz.setLocalLocation(tz.UTC);
+    }
+
+    // ---- Init settings ----
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/launcher_icon',
     );
@@ -93,7 +111,16 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    // Explicitly create high-importance notification channel for Android
+    // ---- Cold-launch via notification tap ----
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails != null &&
+        launchDetails.didNotificationLaunchApp &&
+        launchDetails.notificationResponse != null) {
+      debugPrint('[notif-init] Cold launched via notification tap');
+      await onNotificationResponse(launchDetails.notificationResponse!);
+    }
+
+    // ---- Android-specific setup ----
     final androidImplementation = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -101,34 +128,55 @@ class NotificationService {
 
     if (androidImplementation != null) {
       const channel = AndroidNotificationChannel(
-        'prayer_channel',
-        'Prayer Reminders',
-        description: 'Notifications for upcoming prayer times',
+        _channelId,
+        _channelName,
+        description: _channelDescription,
         importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
       );
       await androidImplementation.createNotificationChannel(channel);
-      await androidImplementation.requestNotificationsPermission();
-      await androidImplementation.requestExactAlarmsPermission();
+      debugPrint('[notif] channel created');
+
+      // Notifications (Android 13+)
+      final bool? notifGranted = await androidImplementation
+          .requestNotificationsPermission();
+      debugPrint('[notif] notifications permission granted: $notifGranted');
+
+      // Exact alarms (Android 12+). This opens the system settings screen
+      // if the user needs to grant it manually.
+      final bool? exactGranted = await androidImplementation
+          .requestExactAlarmsPermission();
+      debugPrint('[notif] exact alarm permission granted: $exactGranted');
     }
 
+    // ---- iOS permission ----
     await _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >()
         ?.requestPermissions(alert: true, badge: true, sound: true);
+
+    _initialized = true;
   }
 
   Future<void> schedulePrayerNotifications(
     List<Day> days,
     Settings settings,
   ) async {
+    debugPrint('[notif] scheduling for ${days.length} days');
+
     await _plugin.cancelAll();
 
-    if (!settings.notifications) return;
+    if (!settings.notifications) {
+      debugPrint('[notif] notifications disabled in settings');
+      return;
+    }
 
     int notificationId = 0;
     final now = DateTime.now();
     final repeatSound = settings.reminderOffsetInMinutes > 0;
+    int scheduled = 0;
 
     for (final day in days) {
       for (final prayer in day.prayers) {
@@ -137,17 +185,26 @@ class NotificationService {
         final time = prayer.time;
         if (time == null || !time.isAfter(now)) continue;
 
-        await _scheduleSingleNotification(
-          id: notificationId++,
-          title: 'Time for ${prayer.name}',
-          body: 'It is time for ${prayer.name} prayer.',
-          scheduledTime: time,
-          settings: settings,
-          payload: '${day.date?.toIso8601String()}|${prayer.name}',
-          repeatSound: repeatSound,
-        );
+        try {
+          await _scheduleSingleNotification(
+            id: notificationId++,
+            title: 'Time for ${prayer.name}',
+            body: 'It is time for ${prayer.name} prayer.',
+            scheduledTime: time,
+            settings: settings,
+            payload: '${day.date?.toIso8601String()}|${prayer.name}',
+            repeatSound: repeatSound,
+          );
+          scheduled++;
+        } catch (e, st) {
+          debugPrint(
+            '[notif] FAILED to schedule ${prayer.name} at $time: $e\n$st',
+          );
+        }
       }
     }
+
+    debugPrint('[notif] scheduled $scheduled notifications');
   }
 
   Future<void> _scheduleSingleNotification({
@@ -161,75 +218,57 @@ class NotificationService {
   }) async {
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        _channelId,
+        _channelName,
+        channelDescription: _channelDescription,
+        importance: Importance.max,
+        priority: Priority.high,
+        ongoing: settings.stickyNotifications,
+        autoCancel: !settings.stickyNotifications,
+        additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
+        actions: const [
+          AndroidNotificationAction(
+            'mark_done_action',
+            'Mark as Done',
+            showsUserInterface: true,
+            cancelNotification: true,
+          ),
+        ],
+      ),
+      iOS: const DarwinNotificationDetails(
+        categoryIdentifier: 'PRAYER_CATEGORY',
+      ),
+    );
+
     try {
       await _plugin.zonedSchedule(
         id,
         title,
         body,
         tzTime,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'prayer_channel',
-            'Prayer Reminders',
-            channelDescription: 'Notifications for upcoming prayer times',
-            importance: Importance.max,
-            priority: Priority.high,
-            ongoing: settings.stickyNotifications,
-            autoCancel: !settings.stickyNotifications,
-            additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
-            actions: const [
-              AndroidNotificationAction(
-                'mark_done_action',
-                'Mark as Done',
-                showsUserInterface: true,
-                cancelNotification: true,
-              ),
-            ],
-          ),
-          iOS: const DarwinNotificationDetails(
-            categoryIdentifier: 'PRAYER_CATEGORY',
-          ),
-        ),
+        details,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
-    } catch (_) {
-      // Fallback to inexact scheduling if exact alarm permission is denied
+      debugPrint('[notif] exact scheduled id=$id at $tzTime');
+    } on PlatformException catch (e) {
+      debugPrint('[notif] exact schedule failed ($e), falling back to inexact');
       await _plugin.zonedSchedule(
         id,
         title,
         body,
         tzTime,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            'prayer_channel',
-            'Prayer Reminders',
-            channelDescription: 'Notifications for upcoming prayer times',
-            importance: Importance.max,
-            priority: Priority.high,
-            ongoing: settings.stickyNotifications,
-            autoCancel: !settings.stickyNotifications,
-            additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
-            actions: const [
-              AndroidNotificationAction(
-                'mark_done_action',
-                'Mark as Done',
-                showsUserInterface: true,
-                cancelNotification: true,
-              ),
-            ],
-          ),
-          iOS: const DarwinNotificationDetails(
-            categoryIdentifier: 'PRAYER_CATEGORY',
-          ),
-        ),
+        details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
+      debugPrint('[notif] inexact scheduled id=$id at $tzTime');
     }
   }
 

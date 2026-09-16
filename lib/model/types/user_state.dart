@@ -11,7 +11,14 @@ class UserState {
 
   int optionalPrayerCounter;
 
-  UserState({this.optionalPrayerCounter = 0});
+  /// Whether the user has already been shown the battery-optimization
+  /// exemption prompt. Persisted so we only ever nag once per install.
+  bool hasPromptedBatteryExemption;
+
+  UserState({
+    this.optionalPrayerCounter = 0,
+    this.hasPromptedBatteryExemption = false,
+  });
 
   factory UserState.fromJson(Map<String, dynamic> json) =>
       _$UserStateFromJson(json);

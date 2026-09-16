@@ -39,28 +39,31 @@ void main() async {
 
   await userStateController.init();
 
-  await NotificationService.instance.init(
-    onNotificationResponse: (NotificationResponse response) async {
-      debugPrint(
-        '[notif-fg] fired: actionId=${response.actionId} payload=${response.payload}',
-      );
-      if (response.actionId == 'mark_done_action' && response.payload != null) {
-        final parts = response.payload!.split('|');
-        if (parts.length == 2) {
-          final parsedDate = DateTime.parse(parts[0]);
-          final date = DateTime.utc(
-            parsedDate.year,
-            parsedDate.month,
-            parsedDate.day,
-          );
-          final prayerName = parts[1];
-          await daysController.togglePrayer(date, prayerName);
-          debugPrint(
-            '[notif-fg] togglePrayer succeeded for $prayerName on $date',
-          );
-        }
+  Future<void> handleNotificationResponse(NotificationResponse response) async {
+    debugPrint(
+      '[notif-handler] fired: actionId=${response.actionId} payload=${response.payload}',
+    );
+
+    if (response.payload != null) {
+      final parts = response.payload!.split('|');
+      if (parts.length == 2) {
+        final parsedDate = DateTime.parse(parts[0]);
+        final date = DateTime.utc(
+          parsedDate.year,
+          parsedDate.month,
+          parsedDate.day,
+        );
+        final prayerName = parts[1];
+        await daysController.togglePrayer(date, prayerName);
+        debugPrint(
+          '[notif-handler] togglePrayer succeeded for $prayerName on $date',
+        );
       }
-    },
+    }
+  }
+
+  await NotificationService.instance.init(
+    onNotificationResponse: handleNotificationResponse,
   );
 
   _refreshLocationInBackground(settingsController);
