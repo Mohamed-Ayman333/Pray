@@ -48,7 +48,6 @@ void main() async {
         final parts = response.payload!.split('|');
         if (parts.length == 2) {
           final parsedDate = DateTime.parse(parts[0]);
-          // Normalize to UTC date to match DaysController key lookup logic
           final date = DateTime.utc(
             parsedDate.year,
             parsedDate.month,

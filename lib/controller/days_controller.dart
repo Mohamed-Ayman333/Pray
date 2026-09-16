@@ -158,8 +158,15 @@ class DaysController extends ChangeNotifier {
   }
 
   Future<void> togglePrayer(DateTime date, String prayerName) async {
-    await _daysRepository.togglePrayer(date, prayerName);
-    await loadDay(date);
+    final normalized = _normalizeDate(date);
+    await _daysRepository.togglePrayer(normalized, prayerName);
+
+    final updatedDay = await _daysRepository.load(normalized);
+    if (updatedDay != null) {
+      _loadedDays[normalized] = updatedDay;
+    }
+
+    notifyListeners();
     await syncNotifications();
   }
 

@@ -66,7 +66,9 @@ class DaysList extends StatelessWidget {
             final prayerName = item['name'] as String;
 
             final Prayer prayerData = dayData!.prayers.firstWhere(
-              (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
+              (p) =>
+                  p.name.trim().toLowerCase() ==
+                  prayerName.trim().toLowerCase(),
               orElse: () => Prayer(name: prayerName),
             );
 
@@ -76,7 +78,16 @@ class DaysList extends StatelessWidget {
             return GestureDetector(
               onTap: isSunrise
                   ? null
-                  : () => onToggle(dayData!.date!, prayerName),
+                  : () {
+                      final rawDate = dayData!.date ?? DateTime.now();
+                      final localDate = rawDate.toLocal();
+                      final utcDate = DateTime.utc(
+                        localDate.year,
+                        localDate.month,
+                        localDate.day,
+                      );
+                      onToggle(utcDate, prayerName);
+                    },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
