@@ -108,6 +108,11 @@ void main() async {
     daysController.loadNext30Days(),
   ]);
 
+  // loadNext30Days() no longer schedules notifications itself (that
+  // previously caused double-scheduling when clearAndReload() also called
+  // it), so schedule the initial batch explicitly here on startup.
+  await daysController.syncNotifications();
+
   runApp(
     MultiProvider(
       providers: [

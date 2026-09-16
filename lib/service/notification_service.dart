@@ -1,15 +1,47 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     hide Day;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:pray/model/storage/app_database.dart';
+import 'package:pray/model/storage/local_days_storage.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
 
 @pragma('vm:entry-point')
-void notificationTapBackground(NotificationResponse response) {
-  if (response.actionId == 'mark_done_action') {
-    // Handle background taps if app is killed
+void notificationTapBackground(NotificationResponse response) async {
+  // Required when executing background tasks in Flutter
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (response.actionId == 'mark_done_action' && response.payload != null) {
+    final parts = response.payload!.split('|');
+    if (parts.length == 2) {
+      final date = DateTime.parse(parts[0]);
+      final prayerName = parts[1];
+
+      try {
+        // Initialize local storage inside the background isolate
+        final isar = await AppDatabase.init();
+        final daysStorage = LocalDaysStorage(isar);
+
+        final normalizedDate = DateTime.utc(date.year, date.month, date.day);
+        final day = await daysStorage.load(normalizedDate);
+
+        if (day != null) {
+          final prayerIndex = day.prayers.indexWhere(
+            (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
+          );
+
+          if (prayerIndex != -1) {
+            day.prayers[prayerIndex].isDone = true;
+            await daysStorage.save(day);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error updating prayer in background: $e');
+      }
+    }
   }
 }
 
@@ -38,7 +70,7 @@ class NotificationService {
           DarwinNotificationAction.plain(
             'mark_done_action',
             'Mark as Done',
-            options: {DarwinNotificationActionOption.foreground},
+            options: const <DarwinNotificationActionOption>{},
           ),
         ],
       ),
@@ -70,8 +102,6 @@ class NotificationService {
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  /// Schedules prayer notifications. Repeating interval step is determined by `reminderOffsetInMinutes`.
-  /// If `reminderOffsetInMinutes` is 0, no repeat notifications are scheduled (only the base notification).
   Future<void> schedulePrayerNotifications(
     List<Day> days,
     Settings settings,
@@ -86,15 +116,13 @@ class NotificationService {
 
     for (final day in days) {
       for (final prayer in day.prayers) {
-        if (prayer.isDone) continue; // Skip completed prayers
+        if (prayer.isDone) continue;
 
         final time = prayer.time;
         if (time == null) continue;
 
-        // Base prayer time
         final baseTime = time;
 
-        // Always schedule initial notification
         if (baseTime.isAfter(now)) {
           await _scheduleSingleNotification(
             id: notificationId++,
@@ -106,9 +134,7 @@ class NotificationService {
           );
         }
 
-        // Schedule repeats at the interval configured in settings if interval > 0
         if (intervalMinutes > 0) {
-          // Schedules 3 repeat intervals after prayer time
           for (int repeat = 1; repeat <= 3; repeat++) {
             final repeatTime = baseTime.add(
               Duration(minutes: repeat * intervalMinutes),
@@ -158,7 +184,7 @@ class NotificationService {
             AndroidNotificationAction(
               'mark_done_action',
               'Mark as Done',
-              showsUserInterface: true,
+              showsUserInterface: false,
             ),
           ],
         ),

@@ -218,7 +218,6 @@ package controller {
         - _daysRepository: IDaysStorage
         - _loadedDays: Map<DateTime, Day>
         - _settingsController: SettingsController
-        - _userStateController: UserStateController
 
         + dispose(): void
         - _onSettingsChanged(): Future<void>
@@ -243,7 +242,6 @@ package controller {
     DaysController "1" --> "1" IDaysStorage
     DaysController "1" o-- "*" Day
     DaysController "1" --> "1" SettingsController
-    DaysController "1" --> "1" UserStateController
     SettingsController "1" --> "1" SettingsRepository
     SettingsController "1" o-- "1" Settings
     UserStateController "1" --> "1" UserStateRepository

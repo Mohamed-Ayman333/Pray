@@ -32,6 +32,12 @@ class DaysController extends ChangeNotifier {
     final settings = _settingsController.currentSettings;
     final upcomingDays = _loadedDays.values.toList();
 
+    // Cancel everything previously scheduled before scheduling the new
+    // batch. Without this, every sync just adds more alarms on top of the
+    // old ones until Android's per-app alarm cap (500) is hit, which
+    // throws an unhandled PlatformException and blocks app startup.
+    await NotificationService.instance.cancelAll();
+
     await NotificationService.instance.schedulePrayerNotifications(
       upcomingDays,
       settings,
@@ -207,6 +213,9 @@ class DaysController extends ChangeNotifier {
     final startDate = _normalizeDate(today);
     final endDate = startDate.add(const Duration(days: 30));
     await loadDaysInRange(startDate, endDate);
-    await syncNotifications();
+    // Notification syncing is intentionally left to the caller.
+    // clearAndReload() already calls syncNotifications() once after both
+    // loadMonth() and loadNext30Days() finish — calling it here too meant
+    // every settings change scheduled the full notification batch twice.
   }
 }
