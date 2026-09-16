@@ -70,6 +70,7 @@
         <string>This app requires location access to calculate accurate prayer times for your area.</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
         <string>This app requires location access to calculate accurate prayer times for your area.</string>
-
+    <key>NSPermissionUserNotificationUsageDescription</key>
+    <string>We need notification access to remind you of prayer times.</string>
 </dict>
 </plist>
