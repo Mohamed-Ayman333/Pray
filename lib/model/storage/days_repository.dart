@@ -25,6 +25,25 @@ class DaysRepository implements IDaysStorage {
     return targetDate.isAtSameMomentAs(today);
   }
 
+  /// Central logic for toggling prayer completion state and persisting locally
+  Future<void> togglePrayer(DateTime date, String prayerName) async {
+    final normalizedDate = DateTime.utc(date.year, date.month, date.day);
+
+    // Load through repository logic (resolves local storage or calculated fallback)
+    final day = await load(normalizedDate);
+
+    if (day != null) {
+      final prayerIndex = day.prayers.indexWhere(
+        (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
+      );
+
+      if (prayerIndex != -1) {
+        day.prayers[prayerIndex].isDone = !day.prayers[prayerIndex].isDone;
+        await save(day);
+      }
+    }
+  }
+
   @override
   Future<void> save(Day day) async {
     await _localStorage.save(day);

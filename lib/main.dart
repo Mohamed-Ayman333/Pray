@@ -6,20 +6,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // Import Database helper
 import 'package:pray/model/storage/app_database.dart';
 
-// Import storage interfaces & concrete implementations
-import 'package:pray/model/storage/i_settings_storage.dart';
+// Import shared settings+days bootstrap
+import 'package:pray/core/app_core.dart';
+
+// Import storage interfaces & concrete implementations (user state only —
+// settings and days storage are wired inside buildAppCore)
 import 'package:pray/model/storage/i_user_state_storage.dart';
-import 'package:pray/model/storage/i_days_storage.dart';
-import 'package:pray/model/storage/settings_storage.dart';
 import 'package:pray/model/storage/user_state_storage.dart';
-import 'package:pray/model/storage/local_days_storage.dart';
-import 'package:pray/model/storage/caching_calculated_days_storage.dart';
-import 'package:pray/model/storage/calculated_days_storage.dart';
 
 // Import repositories
-import 'package:pray/model/storage/settings_repository.dart';
 import 'package:pray/model/storage/user_state_repository.dart';
-import 'package:pray/model/storage/days_repository.dart';
 
 // Import controllers
 import 'package:pray/controller/settings_controller.dart';
@@ -41,58 +37,46 @@ void main() async {
   // STEP 0: Open Isar Database via AppDatabase helper
   final isar = await AppDatabase.init();
 
-  // STEP 1: Initialize raw Isar storage engines
-  final ISettingsStorage settingsStorage = SettingsStorage(isar);
-  final IUserStateStorage userStateStorage = UserStateStorage(isar);
-  final IDaysStorage localDaysStorage = LocalDaysStorage(isar);
+  // STEP 1: Build settings + days data layer (shared with the background
+  // notification-tap isolate in notification_service.dart)
+  final appCore = await buildAppCore(isar);
+  final settingsController = appCore.settingsController;
+  final daysRepository = appCore.daysRepository;
 
-  // STEP 2: Build Settings & UserState layer
-  final settingsRepository = SettingsRepository(
-    settingsStorage: settingsStorage,
-  );
+  // STEP 2: Build UserState layer (unrelated to notifications, wired here directly)
+  final IUserStateStorage userStateStorage = UserStateStorage(isar);
   final userStateRepository = UserStateRepository(
     userStateStorage: userStateStorage,
-  );
-
-  final settingsController = SettingsController(
-    settingsRepository: settingsRepository,
   );
   final userStateController = UserStateController(
     userStateRepository: userStateRepository,
   );
 
-  // STEP 3: Build calculation storages with dynamic SettingsController reference
-  final IDaysStorage calcDaysStorage = CalculatedDaysStorage(
-    settingsController: settingsController,
-  );
-  final IDaysStorage cachingDaysStorage = CachingCalculatedDaysStorage(
-    calculatedStorage: calcDaysStorage,
-    localStorage: localDaysStorage,
-  );
-
-  // STEP 4: Build Days repository and controller
-  final daysRepository = DaysRepository(
-    localStorage: localDaysStorage,
-    cachingCalculatedStorage: cachingDaysStorage,
-  );
-
+  // STEP 3: Build Days controller
   final daysController = DaysController(
     daysRepository: daysRepository,
     settingsController: settingsController,
   );
 
-  // STEP 5: Initialize persisted states
-  await Future.wait([settingsController.init(), userStateController.init()]);
+  // STEP 4: Initialize remaining persisted state
+  // (settingsController is already initialized inside buildAppCore)
+  await userStateController.init();
 
-  // STEP 6: Initialize Notification Service and wire Mark as Done payload action
+  // STEP 5: Initialize Notification Service and wire Mark as Done payload action
   await NotificationService.instance.init(
     onNotificationResponse: (NotificationResponse response) async {
+      debugPrint(
+        '[notif-fg] fired: actionId=${response.actionId} payload=${response.payload}',
+      );
       if (response.actionId == 'mark_done_action' && response.payload != null) {
         final parts = response.payload!.split('|');
         if (parts.length == 2) {
           final date = DateTime.parse(parts[0]);
           final prayerName = parts[1];
           await daysController.togglePrayer(date, prayerName);
+          debugPrint(
+            '[notif-fg] togglePrayer succeeded for $prayerName on $date',
+          );
         }
       }
     },

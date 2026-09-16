@@ -1,18 +1,24 @@
+import 'dart:typed_data';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     hide Day;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+
+import 'package:pray/core/app_core.dart';
 import 'package:pray/model/storage/app_database.dart';
-import 'package:pray/model/storage/local_days_storage.dart';
+
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) async {
-  // Required when executing background tasks in Flutter
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint(
+    '[notif-bg] fired: actionId=${response.actionId} payload=${response.payload}',
+  );
 
   if (response.actionId == 'mark_done_action' && response.payload != null) {
     final parts = response.payload!.split('|');
@@ -21,26 +27,21 @@ void notificationTapBackground(NotificationResponse response) async {
       final prayerName = parts[1];
 
       try {
-        // Initialize local storage inside the background isolate
         final isar = await AppDatabase.init();
-        final daysStorage = LocalDaysStorage(isar);
-
-        final normalizedDate = DateTime.utc(date.year, date.month, date.day);
-        final day = await daysStorage.load(normalizedDate);
-
-        if (day != null) {
-          final prayerIndex = day.prayers.indexWhere(
-            (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
-          );
-
-          if (prayerIndex != -1) {
-            day.prayers[prayerIndex].isDone = true;
-            await daysStorage.save(day);
-          }
-        }
-      } catch (e) {
-        debugPrint('Error updating prayer in background: $e');
+        final core = await buildAppCore(isar);
+        await core.daysRepository.togglePrayer(date, prayerName);
+        debugPrint(
+          '[notif-bg] togglePrayer succeeded for $prayerName on $date',
+        );
+      } catch (e, st) {
+        debugPrint(
+          '[notif-bg] Error handling background notification tap: $e\n$st',
+        );
       }
+    } else {
+      debugPrint(
+        '[notif-bg] payload did not split into 2 parts: ${response.payload}',
+      );
     }
   }
 }
@@ -112,46 +113,26 @@ class NotificationService {
 
     int notificationId = 0;
     final now = DateTime.now();
-    final intervalMinutes = settings.reminderOffsetInMinutes;
+    // Whether the notification should keep repeating its sound/vibration
+    // until the user dismisses or acts on it, instead of firing once.
+    final repeatSound = settings.reminderOffsetInMinutes > 0;
 
     for (final day in days) {
       for (final prayer in day.prayers) {
         if (prayer.isDone) continue;
 
         final time = prayer.time;
-        if (time == null) continue;
+        if (time == null || !time.isAfter(now)) continue;
 
-        final baseTime = time;
-
-        if (baseTime.isAfter(now)) {
-          await _scheduleSingleNotification(
-            id: notificationId++,
-            title: 'Time for ${prayer.name}',
-            body: 'It is time for ${prayer.name} prayer.',
-            scheduledTime: baseTime,
-            settings: settings,
-            payload: '${day.date?.toIso8601String()}|${prayer.name}',
-          );
-        }
-
-        if (intervalMinutes > 0) {
-          for (int repeat = 1; repeat <= 3; repeat++) {
-            final repeatTime = baseTime.add(
-              Duration(minutes: repeat * intervalMinutes),
-            );
-
-            if (repeatTime.isAfter(now)) {
-              await _scheduleSingleNotification(
-                id: notificationId++,
-                title: 'Reminder: ${prayer.name}',
-                body: 'It is time for ${prayer.name} prayer.',
-                scheduledTime: repeatTime,
-                settings: settings,
-                payload: '${day.date?.toIso8601String()}|${prayer.name}',
-              );
-            }
-          }
-        }
+        await _scheduleSingleNotification(
+          id: notificationId++,
+          title: 'Time for ${prayer.name}',
+          body: 'It is time for ${prayer.name} prayer.',
+          scheduledTime: time,
+          settings: settings,
+          payload: '${day.date?.toIso8601String()}|${prayer.name}',
+          repeatSound: repeatSound,
+        );
       }
     }
   }
@@ -163,6 +144,7 @@ class NotificationService {
     required DateTime scheduledTime,
     required Settings settings,
     required String payload,
+    bool repeatSound = false,
   }) async {
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
@@ -180,6 +162,10 @@ class NotificationService {
           priority: Priority.high,
           ongoing: settings.stickyNotifications,
           autoCancel: !settings.stickyNotifications,
+          // FLAG_INSISTENT (4): Android keeps replaying this notification's
+          // sound/vibration on this SAME notification until the user
+          // dismisses it or taps an action, instead of only alerting once.
+          additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
           actions: const [
             AndroidNotificationAction(
               'mark_done_action',
@@ -188,6 +174,9 @@ class NotificationService {
             ),
           ],
         ),
+        // Note: iOS has no equivalent to FLAG_INSISTENT — Apple only
+        // allows a notification's sound to play once, so repeatSound
+        // only has an effect on Android.
         iOS: const DarwinNotificationDetails(
           categoryIdentifier: 'PRAYER_CATEGORY',
         ),

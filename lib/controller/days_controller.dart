@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:pray/controller/settings_controller.dart';
-import 'package:pray/model/storage/i_days_storage.dart';
+import 'package:pray/model/storage/days_repository.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
 import 'package:pray/service/notification_service.dart';
 
 class DaysController extends ChangeNotifier {
-  final IDaysStorage _daysRepository;
+  final DaysRepository _daysRepository;
   final SettingsController _settingsController;
   final Map<DateTime, Day> _loadedDays = {};
 
   DaysController({
-    required IDaysStorage daysRepository,
+    required DaysRepository daysRepository,
     required SettingsController settingsController,
   }) : _daysRepository = daysRepository,
        _settingsController = settingsController {
@@ -32,10 +32,6 @@ class DaysController extends ChangeNotifier {
     final settings = _settingsController.currentSettings;
     final upcomingDays = _loadedDays.values.toList();
 
-    // Cancel everything previously scheduled before scheduling the new
-    // batch. Without this, every sync just adds more alarms on top of the
-    // old ones until Android's per-app alarm cap (500) is hit, which
-    // throws an unhandled PlatformException and blocks app startup.
     await NotificationService.instance.cancelAll();
 
     await NotificationService.instance.schedulePrayerNotifications(
@@ -162,21 +158,9 @@ class DaysController extends ChangeNotifier {
   }
 
   Future<void> togglePrayer(DateTime date, String prayerName) async {
-    final normalized = _normalizeDate(date);
-    final day = _loadedDays[normalized];
-
-    if (day == null) return;
-
-    final prayerIndex = day.prayers.indexWhere(
-      (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
-    );
-
-    if (prayerIndex != -1) {
-      day.prayers[prayerIndex].isDone = !day.prayers[prayerIndex].isDone;
-      await _daysRepository.save(day);
-      notifyListeners();
-      await syncNotifications();
-    }
+    await _daysRepository.togglePrayer(date, prayerName);
+    await loadDay(date);
+    await syncNotifications();
   }
 
   Prayer? get nextPrayer {
@@ -213,9 +197,5 @@ class DaysController extends ChangeNotifier {
     final startDate = _normalizeDate(today);
     final endDate = startDate.add(const Duration(days: 30));
     await loadDaysInRange(startDate, endDate);
-    // Notification syncing is intentionally left to the caller.
-    // clearAndReload() already calls syncNotifications() once after both
-    // loadMonth() and loadNext30Days() finish — calling it here too meant
-    // every settings change scheduled the full notification batch twice.
   }
 }
