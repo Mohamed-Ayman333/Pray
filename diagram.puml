@@ -218,9 +218,12 @@ package controller {
         - _daysRepository: IDaysStorage
         - _loadedDays: Map<DateTime, Day>
         - _settingsController: SettingsController
+        - _userStateController: UserStateController
 
         + dispose(): void
         - _onSettingsChanged(): Future<void>
+        - _onUserStateChanged(): Future<void>
+        + syncNotifications(): Future<void>
         + clearAndReload(): Future<void>
         + <<get>> loadedDays: Map<DateTime, Day>
         - _normalizeDate(date: DateTime): DateTime
@@ -240,11 +243,18 @@ package controller {
     DaysController "1" --> "1" IDaysStorage
     DaysController "1" o-- "*" Day
     DaysController "1" --> "1" SettingsController
+    DaysController "1" --> "1" UserStateController
     SettingsController "1" --> "1" SettingsRepository
     SettingsController "1" o-- "1" Settings
     UserStateController "1" --> "1" UserStateRepository
     UserStateController "1" o-- "1" UserState
     
+}
+
+package service {
+
+    class NotificationService {
+    }
 }
 
 package view {

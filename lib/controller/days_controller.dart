@@ -1,25 +1,32 @@
 import 'package:flutter/foundation.dart';
 import 'package:pray/controller/settings_controller.dart';
+import 'package:pray/controller/user_state_controller.dart';
 import 'package:pray/model/storage/i_days_storage.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
+import 'package:pray/service/notification_service.dart';
 
 class DaysController extends ChangeNotifier {
   final IDaysStorage _daysRepository;
   final SettingsController _settingsController;
+  final UserStateController _userStateController;
   final Map<DateTime, Day> _loadedDays = {};
 
   DaysController({
     required IDaysStorage daysRepository,
     required SettingsController settingsController,
+    required UserStateController userStateController,
   }) : _daysRepository = daysRepository,
-       _settingsController = settingsController {
+       _settingsController = settingsController,
+       _userStateController = userStateController {
     _settingsController.addListener(_onSettingsChanged);
+    _userStateController.addListener(_onUserStateChanged);
   }
 
   @override
   void dispose() {
     _settingsController.removeListener(_onSettingsChanged);
+    _userStateController.removeListener(_onUserStateChanged);
     super.dispose();
   }
 
@@ -27,15 +34,31 @@ class DaysController extends ChangeNotifier {
     await clearAndReload();
   }
 
+  Future<void> _onUserStateChanged() async {
+    await syncNotifications();
+  }
+
+  Future<void> syncNotifications() async {
+    final settings = _settingsController.currentSettings;
+    final userState = _userStateController.currentUserState;
+    final upcomingDays = _loadedDays.values.toList();
+
+    await NotificationService.instance.schedulePrayerNotifications(
+      upcomingDays,
+      settings,
+      userState,
+    );
+  }
+
   Future<void> clearAndReload() async {
     _loadedDays.clear();
     final now = DateTime.now();
     await Future.wait([loadMonth(now), loadNext30Days()]);
+    await syncNotifications();
   }
 
   Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
 
-  /// Converts any DateTime to UTC Midnight (00:00:00.000Z) to match Isar storage format
   DateTime _normalizeDate(DateTime date) {
     return DateTime.utc(date.year, date.month, date.day);
   }
@@ -76,14 +99,12 @@ class DaysController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Loads historical days for a given calendar month (capped at today)
   Future<void> loadMonth(DateTime monthDate) async {
     final now = DateTime.now();
     final today = _normalizeDate(now);
 
     final startDate = DateTime.utc(monthDate.year, monthDate.month, 1);
 
-    // Get last day of the target month
     final lastDayOfMonth = DateTime.utc(
       monthDate.year,
       monthDate.month + 1,
@@ -160,6 +181,7 @@ class DaysController extends ChangeNotifier {
       day.prayers[prayerIndex].isDone = !day.prayers[prayerIndex].isDone;
       await _daysRepository.save(day);
       notifyListeners();
+      await syncNotifications();
     }
   }
 
@@ -197,5 +219,6 @@ class DaysController extends ChangeNotifier {
     final startDate = _normalizeDate(today);
     final endDate = startDate.add(const Duration(days: 30));
     await loadDaysInRange(startDate, endDate);
+    await syncNotifications();
   }
 }

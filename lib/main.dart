@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Import Database helper
 import 'package:pray/model/storage/app_database.dart';
@@ -24,6 +25,9 @@ import 'package:pray/model/storage/days_repository.dart';
 import 'package:pray/controller/settings_controller.dart';
 import 'package:pray/controller/user_state_controller.dart';
 import 'package:pray/controller/days_controller.dart';
+
+// Import notification service
+import 'package:pray/service/notification_service.dart';
 
 // Import Theme setup
 import 'package:pray/view/theme/app_theme.dart';
@@ -66,7 +70,7 @@ void main() async {
     localStorage: localDaysStorage,
   );
 
-  // STEP 4: Build Days repository and controller
+  // STEP 4: Build Days repository and controller (Pass userStateController)
   final daysRepository = DaysRepository(
     localStorage: localDaysStorage,
     cachingCalculatedStorage: cachingDaysStorage,
@@ -75,12 +79,27 @@ void main() async {
   final daysController = DaysController(
     daysRepository: daysRepository,
     settingsController: settingsController,
+    userStateController: userStateController,
   );
 
   // STEP 5: Initialize persisted states
   await Future.wait([settingsController.init(), userStateController.init()]);
 
-  // Attempt background location update (does not block initial load)
+  // STEP 6: Initialize Notification Service and wire Mark as Done payload action
+  await NotificationService.instance.init(
+    onNotificationResponse: (NotificationResponse response) async {
+      if (response.actionId == 'mark_done_action' && response.payload != null) {
+        final parts = response.payload!.split('|');
+        if (parts.length == 2) {
+          final date = DateTime.parse(parts[0]);
+          final prayerName = parts[1];
+          await daysController.togglePrayer(date, prayerName);
+        }
+      }
+    },
+  );
+
+  // Attempt background location update
   _refreshLocationInBackground(settingsController);
 
   // Pre-load current month history and upcoming 30 days into memory cache

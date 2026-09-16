@@ -1,15 +1,16 @@
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
+    hide Day;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
+import 'package:pray/model/types/user_state.dart';
 
-// Top-level background action handler required for notification buttons
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) {
   if (response.actionId == 'mark_done_action') {
-    // Background handling logic (e.g., updating Isar storage directly)
+    // Handle background taps if app is killed
   }
 }
 
@@ -31,7 +32,6 @@ class NotificationService {
       '@mipmap/launcher_icon',
     );
 
-    // 1. Configure iOS interactive categories with "Mark as Done" action
     final iosCategories = [
       DarwinNotificationCategory(
         'PRAYER_CATEGORY',
@@ -71,10 +71,11 @@ class NotificationService {
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  /// Schedules prayer notifications taking settings (e.g. sticky notifications) into account
+  /// Schedules prayer notifications and repeating intervals based on settings and user state
   Future<void> schedulePrayerNotifications(
     List<Day> days,
     Settings settings,
+    UserState userState,
   ) async {
     await _plugin.cancelAll();
 
@@ -83,49 +84,64 @@ class NotificationService {
     int notificationId = 0;
     final now = DateTime.now();
 
+    // Pull repeat count/interval from user state (defaults to 1 trigger if 0)
+    final repeatIntervalMinutes = 15; // Set your default interval step
+    final totalRepeats = userState.optionalPrayerCounter > 0
+        ? userState.optionalPrayerCounter
+        : 1;
+
     for (final day in days) {
       for (final prayer in day.prayers) {
+        if (prayer.isDone) continue; // Skip completed prayers
+
         final time = prayer.time;
+        if (time == null) continue;
 
-        if (time != null && time.isAfter(now)) {
-          // Adjust time if a reminder offset is set
-          final scheduledTime = time.add(
-            Duration(minutes: settings.reminderOffsetInMinutes),
-          );
-          final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
+        // Base scheduled time with user reminder offset
+        final baseTime = time.add(
+          Duration(minutes: settings.reminderOffsetInMinutes),
+        );
 
-          await _plugin.zonedSchedule(
-            notificationId++,
-            'Time for ${prayer.name}',
-            'It is time for ${prayer.name} prayer.',
-            tzTime,
-            NotificationDetails(
-              android: AndroidNotificationDetails(
-                'prayer_channel',
-                'Prayer Reminders',
-                channelDescription: 'Notifications for upcoming prayer times',
-                importance: Importance.max,
-                priority: Priority.high,
-                ongoing:
-                    settings.stickyNotifications, // Sticky notification setting
-                autoCancel: !settings.stickyNotifications,
-                actions: const [
-                  AndroidNotificationAction(
-                    'mark_done_action',
-                    'Mark as Done',
-                    showsUserInterface: true,
-                  ),
-                ],
-              ),
-              iOS: const DarwinNotificationDetails(
-                categoryIdentifier: 'PRAYER_CATEGORY',
-              ),
-            ),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
-            payload: '${day.date?.toIso8601String()}|${prayer.name}',
+        for (int repeat = 0; repeat < totalRepeats; repeat++) {
+          final scheduledTime = baseTime.add(
+            Duration(minutes: repeat * repeatIntervalMinutes),
           );
+
+          if (scheduledTime.isAfter(now)) {
+            final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
+
+            await _plugin.zonedSchedule(
+              notificationId++,
+              'Time for ${prayer.name}',
+              'It is time for ${prayer.name} prayer.',
+              tzTime,
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  'prayer_channel',
+                  'Prayer Reminders',
+                  channelDescription: 'Notifications for upcoming prayer times',
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  ongoing: settings.stickyNotifications,
+                  autoCancel: !settings.stickyNotifications,
+                  actions: const [
+                    AndroidNotificationAction(
+                      'mark_done_action',
+                      'Mark as Done',
+                      showsUserInterface: true,
+                    ),
+                  ],
+                ),
+                iOS: const DarwinNotificationDetails(
+                  categoryIdentifier: 'PRAYER_CATEGORY',
+                ),
+              ),
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              uiLocalNotificationDateInterpretation:
+                  UILocalNotificationDateInterpretation.absoluteTime,
+              payload: '${day.date?.toIso8601String()}|${prayer.name}',
+            );
+          }
         }
       }
     }
