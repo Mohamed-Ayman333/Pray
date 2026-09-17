@@ -358,7 +358,8 @@ class SettingsPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 SettingsSwitchTile(
                   title: 'Sticky Notifications',
-                  subtitle: 'Persistent countdown widget in notification bar',
+                  subtitle:
+                      'Keep the notification until the prayer is made done',
                   value: settingsController.stickyNotifications,
                   onChanged: (val) =>
                       settingsController.toggleStickyNotifications(val),

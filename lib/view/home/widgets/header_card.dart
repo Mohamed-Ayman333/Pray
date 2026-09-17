@@ -56,7 +56,7 @@ class HeaderCard extends StatelessWidget {
               Icon(Icons.circle, size: 12, color: primaryTextColor),
               const SizedBox(width: 8),
               Text(
-                'NEXT PRAYER',
+                'COMING NEXT',
                 style: TextStyle(
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.bold,

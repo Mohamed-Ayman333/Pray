@@ -55,7 +55,7 @@ class DaysList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(child: Text('PRAYER', style: _headerStyle)),
-                Text('ATHAN / TIME', style: _headerStyle),
+                Text('TIME', style: _headerStyle),
                 SizedBox(width: 24),
                 Text('STATUS', style: _headerStyle),
                 SizedBox(width: 8),
