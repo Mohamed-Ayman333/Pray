@@ -43,8 +43,6 @@ void main() async {
 
   await userStateController.init();
 
-  // Apply the daily optional-prayer auto-increment once at startup.
-  // (Fires again at midnight and on app resume via _MyAppState.)
   await userStateController.applyDailyAutoIncrement(
     settingsController.currentSettings.autoIncrementOptionalPrayerCounterBy,
   );
@@ -77,13 +75,13 @@ void main() async {
     localeName: settingsController.currentSettings.language.name,
   );
 
-  _refreshLocationInBackground(settingsController);
-
   final now = DateTime.now();
   await Future.wait([
     daysController.loadMonth(now),
     daysController.loadNext30Days(),
   ]);
+
+  unawaited(_refreshLocationInBackground(settingsController));
 
   await daysController.syncNotifications();
 
@@ -101,24 +99,80 @@ void main() async {
 
 Future<void> _refreshLocationInBackground(SettingsController settings) async {
   try {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    debugPrint('[location] starting refresh');
+
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    debugPrint('[location] service enabled: $serviceEnabled');
     if (!serviceEnabled) return;
 
-    LocationPermission permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
+    debugPrint('[location] initial permission: $permission');
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      debugPrint('[location] after request: $permission');
     }
 
-    if (permission == LocationPermission.deniedForever) return;
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      debugPrint('[location] permission not granted, keeping stored coords');
+      return;
+    }
 
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
+    // Cached fix first — instant, no timeout risk.
+    Position? position;
+    try {
+      position = await Geolocator.getLastKnownPosition();
+      debugPrint(
+        '[location] last known: '
+        '${position?.latitude}, ${position?.longitude}',
+      );
+    } catch (e) {
+      debugPrint('[location] getLastKnownPosition failed: $e');
+    }
+
+    // Fall back to a live fix only if nothing is cached.
+    if (position == null) {
+      debugPrint('[location] no cached position, requesting live fix');
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.low,
+            timeLimit: Duration(seconds: 10),
+          ),
+        );
+        debugPrint(
+          '[location] live fix: ${position.latitude}, ${position.longitude}',
+        );
+      } on TimeoutException {
+        debugPrint('[location] live fix timed out — no location available');
+        return;
+      }
+    }
+
+    final current = settings.currentSettings;
+    const threshold = 0.001; // ~100 m
+    final moved =
+        (current.latitude - position.latitude).abs() > threshold ||
+        (current.longitude - position.longitude).abs() > threshold;
+
+    if (!moved) {
+      debugPrint('[location] coordinates unchanged, skipping write');
+      return;
+    }
+
+    debugPrint(
+      '[location] updating → ${position.latitude}, ${position.longitude}',
     );
-
     await settings.updateLocation(position.latitude, position.longitude);
-  } catch (_) {
-    // Fail silently to keep app responsive and offline-ready
+
+    debugPrint(
+      '[location] done → '
+      '${settings.currentSettings.latitude}, '
+      '${settings.currentSettings.longitude}',
+    );
+  } catch (e, st) {
+    debugPrint('[location] refresh failed: $e\n$st');
   }
 }
 
@@ -150,24 +204,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
 
-    // 1. Catch up on any missed days and re-arm the midnight timer
-    //    (iOS suspends timers while backgrounded).
     _runAutoIncrement();
     _scheduleMidnightCheck();
-
-    // 2. Reload today's data so a "Mark as Done" tap from a notification
-    //    action (handled in a background isolate) is reflected in the UI.
     _reloadToday();
+    _refreshLocationOnResume();
   }
 
-  /// Schedules a one-shot timer for the next local midnight, then reschedules
-  /// itself in the callback so it keeps firing day after day.
   void _scheduleMidnightCheck() {
     _midnightTimer?.cancel();
 
     final now = DateTime.now();
-    // `DateTime(now.year, now.month, now.day + 1)` correctly handles month
-    // rollover and DST (the local-timezone constructor normalizes it).
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
     final delay = nextMidnight.difference(now);
 
@@ -188,13 +234,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 
-  /// Reloads today's [Day] from storage, pulling in any changes written by
-  /// the background notification-action isolate. Cheap when nothing changed
-  /// (Isar read + in-memory map assignment).
   Future<void> _reloadToday() async {
     if (!mounted) return;
     final daysController = context.read<DaysController>();
     await daysController.loadDay(DateTime.now());
+  }
+
+  Future<void> _refreshLocationOnResume() async {
+    if (!mounted) return;
+    final settings = context.read<SettingsController>();
+    await _refreshLocationInBackground(settings);
   }
 
   @override
