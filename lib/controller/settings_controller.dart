@@ -14,8 +14,20 @@ class SettingsController extends ChangeNotifier {
     _currentSettings = Settings();
   }
 
+  // --- GETTERS ---
+
   bool get isInitialized => _isInitialized;
   Settings get currentSettings => _currentSettings;
+  bool get isDarkMode => _currentSettings.darkMode;
+
+  CalculationMethod get calculationMethod => _currentSettings.calculationMethod;
+  Madhab get madhab => _currentSettings.madhab;
+  Language get language => _currentSettings.language;
+  bool get notifications => _currentSettings.notifications;
+  bool get stickyNotifications => _currentSettings.stickyNotifications;
+  bool get repeatNotifications => _currentSettings.repeatNotifications;
+  int get autoIncrementOptionalPrayerCounterBy =>
+      _currentSettings.autoIncrementOptionalPrayerCounterBy;
 
   /// Loads persisted settings from local storage on app initialization
   Future<void> init() async {
@@ -45,7 +57,7 @@ class SettingsController extends ChangeNotifier {
     });
   }
 
-  Future<void> toggleDarkMode(bool enabled) async {
+  Future<void> setDarkMode(bool enabled) async {
     await _updateAndSave((s) => s.darkMode = enabled);
   }
 
@@ -57,17 +69,31 @@ class SettingsController extends ChangeNotifier {
     await _updateAndSave((s) => s.stickyNotifications = enabled);
   }
 
-  Future<void> toggleAzan(bool enabled) async {
-    await _updateAndSave((s) => s.azan = enabled);
+  Future<void> toggleRepeatNotifications(bool enabled) async {
+    await _updateAndSave((s) => s.repeatNotifications = enabled);
   }
 
-  Future<void> updateReminderOffset(int minutes) async {
-    await _updateAndSave((s) => s.reminderOffsetInMinutes = minutes);
-  }
+  // --- STEPPERS & ADJUSTMENTS ---
 
   Future<void> updateAutoIncrementOptionalPrayerCounterBy(int value) async {
-    await _updateAndSave((s) => s.autoIncrementOptionalPrayerCounterBy = value);
+    await _updateAndSave(
+      (s) => s.autoIncrementOptionalPrayerCounterBy = value < 0 ? 0 : value,
+    );
   }
+
+  Future<void> incrementAutoIncrementValue() async {
+    await updateAutoIncrementOptionalPrayerCounterBy(
+      _currentSettings.autoIncrementOptionalPrayerCounterBy + 1,
+    );
+  }
+
+  Future<void> decrementAutoIncrementValue() async {
+    await updateAutoIncrementOptionalPrayerCounterBy(
+      _currentSettings.autoIncrementOptionalPrayerCounterBy - 1,
+    );
+  }
+
+  // --- PREFERENCES ---
 
   Future<void> updateLanguage(Language language) async {
     await _updateAndSave((s) => s.language = language);

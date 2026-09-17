@@ -14,8 +14,7 @@ class Settings {
   bool darkMode;
   bool notifications;
   bool stickyNotifications;
-  bool azan;
-  int reminderOffsetInMinutes;
+  bool repeatNotifications;
   int autoIncrementOptionalPrayerCounterBy;
 
   // Added dynamic location coordinates
@@ -35,8 +34,7 @@ class Settings {
     this.darkMode = true,
     this.notifications = false,
     this.stickyNotifications = false,
-    this.azan = false,
-    this.reminderOffsetInMinutes = 0,
+    this.repeatNotifications = false,
     this.autoIncrementOptionalPrayerCounterBy = 0,
     this.latitude = 30.0444, // Default fallback (e.g., Cairo)
     this.longitude = 31.2357,

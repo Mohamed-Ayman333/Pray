@@ -10,7 +10,11 @@ class Prayer {
   DateTime? time;
   bool isDone;
 
-  Prayer({this.name = '', this.time, this.isDone = false});
+  Prayer({this.name = '', this.time, this.isDone = false}) {
+    if (name == 'Sunrise') {
+      isDone = true;
+    }
+  }
 
   factory Prayer.fromJson(Map<String, dynamic> json) => _$PrayerFromJson(json);
   Map<String, dynamic> toJson() => _$PrayerToJson(this);

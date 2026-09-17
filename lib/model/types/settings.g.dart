@@ -22,56 +22,51 @@ const SettingsSchema = CollectionSchema(
       name: r'autoIncrementOptionalPrayerCounterBy',
       type: IsarType.long,
     ),
-    r'azan': PropertySchema(
-      id: 1,
-      name: r'azan',
-      type: IsarType.bool,
-    ),
     r'calculationMethod': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'calculationMethod',
       type: IsarType.byte,
       enumMap: _SettingscalculationMethodEnumValueMap,
     ),
     r'darkMode': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'darkMode',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'language',
       type: IsarType.byte,
       enumMap: _SettingslanguageEnumValueMap,
     ),
     r'latitude': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'latitude',
       type: IsarType.double,
     ),
     r'longitude': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'longitude',
       type: IsarType.double,
     ),
     r'madhab': PropertySchema(
-      id: 7,
+      id: 6,
       name: r'madhab',
       type: IsarType.byte,
       enumMap: _SettingsmadhabEnumValueMap,
     ),
     r'notifications': PropertySchema(
-      id: 8,
+      id: 7,
       name: r'notifications',
       type: IsarType.bool,
     ),
-    r'reminderOffsetInMinutes': PropertySchema(
-      id: 9,
-      name: r'reminderOffsetInMinutes',
-      type: IsarType.long,
+    r'repeatNotifications': PropertySchema(
+      id: 8,
+      name: r'repeatNotifications',
+      type: IsarType.bool,
     ),
     r'stickyNotifications': PropertySchema(
-      id: 10,
+      id: 9,
       name: r'stickyNotifications',
       type: IsarType.bool,
     )
@@ -106,16 +101,15 @@ void _settingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.autoIncrementOptionalPrayerCounterBy);
-  writer.writeBool(offsets[1], object.azan);
-  writer.writeByte(offsets[2], object.calculationMethod.index);
-  writer.writeBool(offsets[3], object.darkMode);
-  writer.writeByte(offsets[4], object.language.index);
-  writer.writeDouble(offsets[5], object.latitude);
-  writer.writeDouble(offsets[6], object.longitude);
-  writer.writeByte(offsets[7], object.madhab.index);
-  writer.writeBool(offsets[8], object.notifications);
-  writer.writeLong(offsets[9], object.reminderOffsetInMinutes);
-  writer.writeBool(offsets[10], object.stickyNotifications);
+  writer.writeByte(offsets[1], object.calculationMethod.index);
+  writer.writeBool(offsets[2], object.darkMode);
+  writer.writeByte(offsets[3], object.language.index);
+  writer.writeDouble(offsets[4], object.latitude);
+  writer.writeDouble(offsets[5], object.longitude);
+  writer.writeByte(offsets[6], object.madhab.index);
+  writer.writeBool(offsets[7], object.notifications);
+  writer.writeBool(offsets[8], object.repeatNotifications);
+  writer.writeBool(offsets[9], object.stickyNotifications);
 }
 
 Settings _settingsDeserialize(
@@ -127,21 +121,20 @@ Settings _settingsDeserialize(
   final object = Settings(
     autoIncrementOptionalPrayerCounterBy:
         reader.readLongOrNull(offsets[0]) ?? 0,
-    azan: reader.readBoolOrNull(offsets[1]) ?? false,
     calculationMethod: _SettingscalculationMethodValueEnumMap[
-            reader.readByteOrNull(offsets[2])] ??
+            reader.readByteOrNull(offsets[1])] ??
         CalculationMethod.egyptian,
-    darkMode: reader.readBoolOrNull(offsets[3]) ?? true,
+    darkMode: reader.readBoolOrNull(offsets[2]) ?? true,
     language:
-        _SettingslanguageValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+        _SettingslanguageValueEnumMap[reader.readByteOrNull(offsets[3])] ??
             Language.en,
-    latitude: reader.readDoubleOrNull(offsets[5]) ?? 30.0444,
-    longitude: reader.readDoubleOrNull(offsets[6]) ?? 31.2357,
-    madhab: _SettingsmadhabValueEnumMap[reader.readByteOrNull(offsets[7])] ??
+    latitude: reader.readDoubleOrNull(offsets[4]) ?? 30.0444,
+    longitude: reader.readDoubleOrNull(offsets[5]) ?? 31.2357,
+    madhab: _SettingsmadhabValueEnumMap[reader.readByteOrNull(offsets[6])] ??
         Madhab.shafi,
-    notifications: reader.readBoolOrNull(offsets[8]) ?? false,
-    reminderOffsetInMinutes: reader.readLongOrNull(offsets[9]) ?? 0,
-    stickyNotifications: reader.readBoolOrNull(offsets[10]) ?? false,
+    notifications: reader.readBoolOrNull(offsets[7]) ?? false,
+    repeatNotifications: reader.readBoolOrNull(offsets[8]) ?? false,
+    stickyNotifications: reader.readBoolOrNull(offsets[9]) ?? false,
   );
   object.id = id;
   return object;
@@ -157,28 +150,26 @@ P _settingsDeserializeProp<P>(
     case 0:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 1:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
-    case 2:
       return (_SettingscalculationMethodValueEnumMap[
               reader.readByteOrNull(offset)] ??
           CalculationMethod.egyptian) as P;
-    case 3:
+    case 2:
       return (reader.readBoolOrNull(offset) ?? true) as P;
-    case 4:
+    case 3:
       return (_SettingslanguageValueEnumMap[reader.readByteOrNull(offset)] ??
           Language.en) as P;
-    case 5:
+    case 4:
       return (reader.readDoubleOrNull(offset) ?? 30.0444) as P;
-    case 6:
+    case 5:
       return (reader.readDoubleOrNull(offset) ?? 31.2357) as P;
-    case 7:
+    case 6:
       return (_SettingsmadhabValueEnumMap[reader.readByteOrNull(offset)] ??
           Madhab.shafi) as P;
+    case 7:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 8:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 9:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 10:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -373,16 +364,6 @@ extension SettingsQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterFilterCondition> azanEqualTo(
-      bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'azan',
-        value: value,
       ));
     });
   }
@@ -746,57 +727,11 @@ extension SettingsQueryFilter
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      reminderOffsetInMinutesEqualTo(int value) {
+      repeatNotificationsEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'reminderOffsetInMinutes',
+        property: r'repeatNotifications',
         value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      reminderOffsetInMinutesGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'reminderOffsetInMinutes',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      reminderOffsetInMinutesLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'reminderOffsetInMinutes',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterFilterCondition>
-      reminderOffsetInMinutesBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'reminderOffsetInMinutes',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
       ));
     });
   }
@@ -831,18 +766,6 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
           r'autoIncrementOptionalPrayerCounterBy', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterSortBy> sortByAzan() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'azan', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterSortBy> sortByAzanDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'azan', Sort.desc);
     });
   }
 
@@ -930,17 +853,16 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
     });
   }
 
-  QueryBuilder<Settings, Settings, QAfterSortBy>
-      sortByReminderOffsetInMinutes() {
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByRepeatNotifications() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'reminderOffsetInMinutes', Sort.asc);
+      return query.addSortBy(r'repeatNotifications', Sort.asc);
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      sortByReminderOffsetInMinutesDesc() {
+      sortByRepeatNotificationsDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'reminderOffsetInMinutes', Sort.desc);
+      return query.addSortBy(r'repeatNotifications', Sort.desc);
     });
   }
 
@@ -972,18 +894,6 @@ extension SettingsQuerySortThenBy
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(
           r'autoIncrementOptionalPrayerCounterBy', Sort.desc);
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterSortBy> thenByAzan() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'azan', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QAfterSortBy> thenByAzanDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'azan', Sort.desc);
     });
   }
 
@@ -1083,17 +993,16 @@ extension SettingsQuerySortThenBy
     });
   }
 
-  QueryBuilder<Settings, Settings, QAfterSortBy>
-      thenByReminderOffsetInMinutes() {
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByRepeatNotifications() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'reminderOffsetInMinutes', Sort.asc);
+      return query.addSortBy(r'repeatNotifications', Sort.asc);
     });
   }
 
   QueryBuilder<Settings, Settings, QAfterSortBy>
-      thenByReminderOffsetInMinutesDesc() {
+      thenByRepeatNotificationsDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'reminderOffsetInMinutes', Sort.desc);
+      return query.addSortBy(r'repeatNotifications', Sort.desc);
     });
   }
 
@@ -1117,12 +1026,6 @@ extension SettingsQueryWhereDistinct
       distinctByAutoIncrementOptionalPrayerCounterBy() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'autoIncrementOptionalPrayerCounterBy');
-    });
-  }
-
-  QueryBuilder<Settings, Settings, QDistinct> distinctByAzan() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'azan');
     });
   }
 
@@ -1168,10 +1071,9 @@ extension SettingsQueryWhereDistinct
     });
   }
 
-  QueryBuilder<Settings, Settings, QDistinct>
-      distinctByReminderOffsetInMinutes() {
+  QueryBuilder<Settings, Settings, QDistinct> distinctByRepeatNotifications() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'reminderOffsetInMinutes');
+      return query.addDistinctBy(r'repeatNotifications');
     });
   }
 
@@ -1194,12 +1096,6 @@ extension SettingsQueryProperty
       autoIncrementOptionalPrayerCounterByProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'autoIncrementOptionalPrayerCounterBy');
-    });
-  }
-
-  QueryBuilder<Settings, bool, QQueryOperations> azanProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'azan');
     });
   }
 
@@ -1246,10 +1142,9 @@ extension SettingsQueryProperty
     });
   }
 
-  QueryBuilder<Settings, int, QQueryOperations>
-      reminderOffsetInMinutesProperty() {
+  QueryBuilder<Settings, bool, QQueryOperations> repeatNotificationsProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'reminderOffsetInMinutes');
+      return query.addPropertyName(r'repeatNotifications');
     });
   }
 
@@ -1268,9 +1163,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       darkMode: json['darkMode'] as bool? ?? true,
       notifications: json['notifications'] as bool? ?? false,
       stickyNotifications: json['stickyNotifications'] as bool? ?? false,
-      azan: json['azan'] as bool? ?? false,
-      reminderOffsetInMinutes:
-          (json['reminderOffsetInMinutes'] as num?)?.toInt() ?? 0,
+      repeatNotifications: json['repeatNotifications'] as bool? ?? false,
       autoIncrementOptionalPrayerCounterBy:
           (json['autoIncrementOptionalPrayerCounterBy'] as num?)?.toInt() ?? 0,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 30.0444,
@@ -1289,8 +1182,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'darkMode': instance.darkMode,
       'notifications': instance.notifications,
       'stickyNotifications': instance.stickyNotifications,
-      'azan': instance.azan,
-      'reminderOffsetInMinutes': instance.reminderOffsetInMinutes,
+      'repeatNotifications': instance.repeatNotifications,
       'autoIncrementOptionalPrayerCounterBy':
           instance.autoIncrementOptionalPrayerCounterBy,
       'latitude': instance.latitude,

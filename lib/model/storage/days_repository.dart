@@ -11,93 +11,133 @@ class DaysRepository implements IDaysStorage {
   }) : _localStorage = localStorage,
        _cachingCalculatedStorage = cachingCalculatedStorage;
 
+  DateTime _toNormalizedUtc(DateTime date) {
+    final local = date.toLocal();
+    return DateTime.utc(local.year, local.month, local.day);
+  }
+
   bool _isPast(DateTime date) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final targetDate = _toNormalizedUtc(date);
     return targetDate.isBefore(today);
   }
 
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(date.year, date.month, date.day);
-    return targetDate.isAtSameMomentAs(today);
+  /// Central logic for toggling prayer completion state and persisting locally
+  Future<void> togglePrayer(DateTime date, String prayerName) async {
+    final normalizedDate = _toNormalizedUtc(date);
+
+    // Load existing day or fall back to calculation
+    var day = await load(normalizedDate);
+
+    if (day != null) {
+      day.date = normalizedDate;
+      final prayerIndex = day.prayers.indexWhere(
+        (p) => p.name.trim().toLowerCase() == prayerName.trim().toLowerCase(),
+      );
+
+      if (prayerIndex != -1) {
+        day.prayers[prayerIndex].isDone = !day.prayers[prayerIndex].isDone;
+        await save(day);
+      }
+    }
   }
 
   @override
   Future<void> save(Day day) async {
+    if (day.date != null) {
+      day.date = _toNormalizedUtc(day.date!);
+    }
     await _localStorage.save(day);
   }
 
   @override
   Future<void> saveAll(List<Day> days) async {
+    for (final d in days) {
+      if (d.date != null) {
+        d.date = _toNormalizedUtc(d.date!);
+      }
+    }
     await _localStorage.saveAll(days);
   }
 
   @override
   Future<Day?> load(DateTime date) async {
+    final normalizedDate = _toNormalizedUtc(date);
+
     // 1. Past: Local ONLY
-    if (_isPast(date)) {
-      return await _localStorage.load(date);
+    if (_isPast(normalizedDate)) {
+      return await _localStorage.load(normalizedDate);
     }
 
-    // 2. Today: Local FIRST -> Calculated fallback (caching to local)
-    if (_isToday(date)) {
-      final localDay = await _localStorage.load(date);
-      if (localDay != null) {
-        return localDay;
+    // 2. Today & Future: Dynamic Calculation + Preserve User Progress
+    final localDay = await _localStorage.load(normalizedDate);
+    final calculatedDay = await _cachingCalculatedStorage.load(normalizedDate);
+
+    if (calculatedDay == null) return localDay;
+
+    calculatedDay.date = normalizedDate;
+
+    if (localDay != null) {
+      calculatedDay.id = localDay.id;
+      for (final calcPrayer in calculatedDay.prayers) {
+        final existingIndex = localDay.prayers.indexWhere(
+          (p) =>
+              p.name.trim().toLowerCase() ==
+              calcPrayer.name.trim().toLowerCase(),
+        );
+        if (existingIndex != -1) {
+          calcPrayer.isDone = localDay.prayers[existingIndex].isDone;
+        }
       }
-      return await _cachingCalculatedStorage.load(date);
     }
 
-    // 3. Future: Pure Calculation (No local persistence)
-    return await _cachingCalculatedStorage.load(date);
+    return calculatedDay;
   }
 
   @override
   Future<List<Day>> getInRange(DateTime startDate, DateTime endDate) async {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = DateTime.utc(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final tomorrow = today.add(const Duration(days: 1));
 
-    final start = DateTime(startDate.year, startDate.month, startDate.day);
-    final end = DateTime(endDate.year, endDate.month, endDate.day);
+    final start = _toNormalizedUtc(startDate);
+    final end = _toNormalizedUtc(endDate);
 
-    // Scenario A: Entirely Past -> Local ONLY
     if (end.isBefore(today)) {
       return await _localStorage.getInRange(start, end);
     }
 
-    // Scenario B: Entirely Today
     if (start.isAtSameMomentAs(today) && end.isAtSameMomentAs(today)) {
       return await _fetchTodayRange(today);
     }
 
-    // Scenario C: Entirely Future -> Direct Calculation
     if (start.isAfter(today)) {
-      return await _cachingCalculatedStorage.getInRange(start, end);
+      final List<Day> futureDays = [];
+      var current = start;
+      while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
+        final loaded = await load(current);
+        if (loaded != null) futureDays.add(loaded);
+        current = current.add(const Duration(days: 1));
+      }
+      return futureDays;
     }
 
-    // Scenario D: Multi-day range spanning across Past / Today / Future
     final List<Future<List<Day>>> requests = [];
 
-    // Part 1: Past portion -> Local ONLY
     if (start.isBefore(today)) {
       final pastEnd = end.isBefore(today) ? end : yesterday;
       requests.add(_localStorage.getInRange(start, pastEnd));
     }
 
-    // Part 2: Today portion -> Local FIRST -> Calculated fallback
     if (!start.isAfter(today) && !end.isBefore(today)) {
       requests.add(_fetchTodayRange(today));
     }
 
-    // Part 3: Future portion -> Calculated ONLY
     if (end.isAfter(today)) {
       final futureStart = start.isAfter(today) ? start : tomorrow;
-      requests.add(_cachingCalculatedStorage.getInRange(futureStart, end));
+      requests.add(_fetchFutureRange(futureStart, end));
     }
 
     final results = await Future.wait(requests);
@@ -107,5 +147,16 @@ class DaysRepository implements IDaysStorage {
   Future<List<Day>> _fetchTodayRange(DateTime today) async {
     final day = await load(today);
     return day != null ? [day] : [];
+  }
+
+  Future<List<Day>> _fetchFutureRange(DateTime start, DateTime end) async {
+    final List<Day> futureDays = [];
+    var current = start;
+    while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
+      final loaded = await load(current);
+      if (loaded != null) futureDays.add(loaded);
+      current = current.add(const Duration(days: 1));
+    }
+    return futureDays;
   }
 }

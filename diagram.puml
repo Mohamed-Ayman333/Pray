@@ -94,7 +94,6 @@ package model {
             -localStorage: IDaysStorage
             -calculatedStorage: IDaysStorage
 
-            - _isToday(date: DateTime): Boolean
             +save(day: Day): Future<void>
             +load(date: DateTime): Future<Day?>
             +getInRange(startDate: DateTime, endDate: DateTime): Future<List<Day>>
@@ -174,15 +173,28 @@ package controller {
 
         + <<get>> isInitialized: Boolean
         + <<get>> currentSettings: Settings
+        + <<get>> isDarkMode: Boolean
+        + <<get>> calculationMethod: CalculationMethod
+        + <<get>> madhab: Madhab
+        + <<get>> language: Language
+        + <<get>> notifications: Boolean
+        + <<get>> stickyNotifications: Boolean
+        + <<get>> azan: Boolean
+        + <<get>> reminderOffsetInMinutes: Integer
+        + <<get>> autoIncrementOptionalPrayerCounterBy: Integer
         + init(): Future<void>
         - _updateAndSave(update: Function): Future<void>
         + updateLocation(latitude: Double, longitude: Double): Future<void>
-        + toggleDarkMode(enabled: Boolean): Future<void>
+        + setDarkMode(enabled: Boolean): Future<void>
         + toggleNotifications(enabled: Boolean): Future<void>
         + toggleStickyNotifications(enabled: Boolean): Future<void>
         + toggleAzan(enabled: Boolean): Future<void>
         + updateReminderOffset(minutes: Integer): Future<void>
+        + incrementReminderOffset(): Future<void>
+        + decrementReminderOffset(): Future<void>
         + updateAutoIncrementOptionalPrayerCounterBy(value: Integer): Future<void>
+        + incrementAutoIncrementvalue(): Future<void>
+        + decrementAutoIncrementvalue(): Future<void>
         + updateLanguage(language: Language): Future<void>
         + updateCalculationMethod(method: CalculationMethod): Future<void>
         + updateMadhab(madhab: Madhab): Future<void>
@@ -205,22 +217,42 @@ package controller {
     class DaysController {
         - _daysRepository: IDaysStorage
         - _loadedDays: Map<DateTime, Day>
+        - _settingsController: SettingsController
 
+        + dispose(): void
+        - _onSettingsChanged(): Future<void>
+        - _onUserStateChanged(): Future<void>
+        + syncNotifications(): Future<void>
+        + clearAndReload(): Future<void>
         + <<get>> loadedDays: Map<DateTime, Day>
         - _normalizeDate(date: DateTime): DateTime
         + loadDay(date: DateTime): Future<void>
         + loadDaysInRange(startDate: DateTime, endDate: DateTime): Future<void>
+        + loadMonth(monthDate: DateTime): Future<void>
         + getDay(date: DateTime): Day?
+        + getOrLoadDay(date: DateTime): Future<Day>
+        + getMissedPrayersCount(date: DateTime): Integer
+        + isDayFullyCompleted(date: DateTime): Boolean
         + togglePrayer(date: DateTime, prayerName: String): Future<void>
+        +<<get>> nextPrayer: Prayer?
+        + <<get>> timeUntilNextPrayer: Duration
+        + loadNext30Days(): Future<void>
     }
 
     DaysController "1" --> "1" IDaysStorage
     DaysController "1" o-- "*" Day
+    DaysController "1" --> "1" SettingsController
     SettingsController "1" --> "1" SettingsRepository
     SettingsController "1" o-- "1" Settings
     UserStateController "1" --> "1" UserStateRepository
     UserStateController "1" o-- "1" UserState
     
+}
+
+package service {
+
+    class NotificationService {
+    }
 }
 
 package view {

@@ -1,35 +1,85 @@
 import 'package:flutter/foundation.dart';
-import 'package:pray/model/storage/i_days_storage.dart';
+import 'package:pray/controller/settings_controller.dart';
+import 'package:pray/model/storage/days_repository.dart';
 import 'package:pray/model/types/day.dart';
+import 'package:pray/model/types/prayer.dart';
+import 'package:pray/service/notification_service.dart';
 
 class DaysController extends ChangeNotifier {
-  final IDaysStorage _daysRepository;
+  final DaysRepository _daysRepository;
+  final SettingsController _settingsController;
   final Map<DateTime, Day> _loadedDays = {};
 
-  DaysController({required IDaysStorage daysRepository})
-    : _daysRepository = daysRepository;
-
-  /// Public read-only access to loaded days
-  Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
-
-  /// Utility to ensure Map keys are strictly midnight dates
-  DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+  DaysController({
+    required DaysRepository daysRepository,
+    required SettingsController settingsController,
+  }) : _daysRepository = daysRepository,
+       _settingsController = settingsController {
+    _settingsController.addListener(_onSettingsChanged);
   }
 
-  /// Loads a single day from the repository and updates in-memory cache
+  @override
+  void dispose() {
+    _settingsController.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  Future<void> _onSettingsChanged() async {
+    await clearAndReload();
+  }
+
+  Future<void> syncNotifications() async {
+    final settings = _settingsController.currentSettings;
+    final upcomingDays = _loadedDays.values.toList();
+
+    await NotificationService.instance.cancelAll();
+
+    await NotificationService.instance.schedulePrayerNotifications(
+      upcomingDays,
+      settings,
+    );
+  }
+
+  Future<void> clearAndReload() async {
+    _loadedDays.clear();
+    final now = DateTime.now();
+    await Future.wait([loadMonth(now), loadNext30Days()]);
+    await syncNotifications();
+  }
+
+  Map<DateTime, Day> get loadedDays => Map.unmodifiable(_loadedDays);
+
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime.utc(date.year, date.month, date.day);
+  }
+
   Future<void> loadDay(DateTime date) async {
     final normalized = _normalizeDate(date);
     final day = await _daysRepository.load(normalized);
     if (day != null) {
       _loadedDays[normalized] = day;
-      notifyListeners();
+    } else {
+      _loadedDays.remove(normalized);
     }
+    notifyListeners();
   }
 
-  /// Loads a date range from repository and populates in-memory cache
   Future<void> loadDaysInRange(DateTime startDate, DateTime endDate) async {
-    final days = await _daysRepository.getInRange(startDate, endDate);
+    final startNormalized = _normalizeDate(startDate);
+    final endNormalized = DateTime.utc(
+      endDate.year,
+      endDate.month,
+      endDate.day,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    final days = await _daysRepository.getInRange(
+      startNormalized,
+      endNormalized,
+    );
     for (final day in days) {
       if (day.date != null) {
         final normalized = _normalizeDate(day.date!);
@@ -39,31 +89,120 @@ class DaysController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retrieves a Day synchronously from the in-memory cache
+  Future<void> loadMonth(DateTime monthDate) async {
+    final now = DateTime.now();
+    final today = _normalizeDate(now);
+
+    final startDate = DateTime.utc(monthDate.year, monthDate.month, 1);
+
+    final lastDayOfMonth = DateTime.utc(
+      monthDate.year,
+      monthDate.month + 1,
+      0,
+    ).day;
+    var endDate = DateTime.utc(
+      monthDate.year,
+      monthDate.month,
+      lastDayOfMonth,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    if (startDate.isAfter(today)) return;
+
+    if (endDate.isAfter(today)) {
+      endDate = DateTime.utc(
+        today.year,
+        today.month,
+        today.day,
+        23,
+        59,
+        59,
+        999,
+      );
+    }
+
+    await loadDaysInRange(startDate, endDate);
+  }
+
   Day? getDay(DateTime date) {
     return _loadedDays[_normalizeDate(date)];
   }
 
-  /// Toggles `isDone` status for a specific prayer and persists to storage
+  Future<Day?> getOrLoadDay(DateTime date) async {
+    final normalized = _normalizeDate(date);
+
+    if (_loadedDays.containsKey(normalized)) {
+      return _loadedDays[normalized];
+    }
+
+    await loadDay(normalized);
+    return _loadedDays[normalized];
+  }
+
+  int getMissedPrayersCount(DateTime date) {
+    final normalized = _normalizeDate(date);
+    final day = getDay(normalized);
+
+    if (day == null) {
+      return 0;
+    }
+
+    return day.pendingPrayers.length;
+  }
+
+  bool isDayFullyCompleted(DateTime date) {
+    return getMissedPrayersCount(date) == 0;
+  }
+
   Future<void> togglePrayer(DateTime date, String prayerName) async {
     final normalized = _normalizeDate(date);
-    final day = _loadedDays[normalized];
+    await _daysRepository.togglePrayer(normalized, prayerName);
 
-    if (day == null) return;
-
-    // Find target prayer in list
-    final prayerIndex = day.prayers.indexWhere(
-      (p) => p.name.toLowerCase() == prayerName.toLowerCase(),
-    );
-
-    if (prayerIndex != -1) {
-      // Toggle in-memory state
-      day.prayers[prayerIndex].isDone = !day.prayers[prayerIndex].isDone;
-
-      // Persist updated Day model back through repository
-      await _daysRepository.save(day);
-
-      notifyListeners();
+    final updatedDay = await _daysRepository.load(normalized);
+    if (updatedDay != null) {
+      _loadedDays[normalized] = updatedDay;
     }
+
+    notifyListeners();
+    await syncNotifications();
+  }
+
+  Prayer? get nextPrayer {
+    final now = DateTime.now();
+    final today = getDay(now);
+
+    if (today != null) {
+      for (final prayer in today.prayers) {
+        final time = prayer.time;
+        if (time != null && time.isAfter(now)) {
+          return prayer;
+        }
+      }
+    }
+
+    final tomorrow = getDay(now.add(const Duration(days: 1)));
+    if (tomorrow == null) return null;
+
+    try {
+      return tomorrow.prayers.firstWhere((p) => p.name.toLowerCase() == 'fajr');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Duration get timeUntilNextPrayer {
+    final next = nextPrayer;
+    if (next == null || next.time == null) return Duration.zero;
+    return next.time!.difference(DateTime.now());
+  }
+
+  Future<void> loadNext30Days() async {
+    final today = DateTime.now();
+    final startDate = _normalizeDate(today);
+    final endDate = startDate.add(const Duration(days: 30));
+    await loadDaysInRange(startDate, endDate);
   }
 }
