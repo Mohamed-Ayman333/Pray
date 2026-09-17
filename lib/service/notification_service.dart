@@ -56,10 +56,6 @@ void notificationTapBackground(NotificationResponse response) async {
 /// name ('en' or 'ar'). Used outside of a widget tree (e.g. from the
 /// notification service) where `AppLocalizations.of(context)` isn't
 /// available.
-///
-/// `lookupAppLocalizations` is a top-level function generated into
-/// `app_localizations.dart`; it dispatches to the correct concrete
-/// subclass (`AppLocalizationsEn`, `AppLocalizationsAr`, ...).
 AppLocalizations _resolveL10n(String localeName) {
   try {
     return lookupAppLocalizations(Locale(localeName));
@@ -99,7 +95,7 @@ class NotificationService {
       tz.setLocalLocation(tz.UTC);
     }
 
-    // ---- Localizations (needed for channel name/description) ----
+    // ---- Localizations ----
     final l10n = _resolveL10n(localeName);
 
     // ---- Init settings ----
@@ -111,6 +107,8 @@ class NotificationService {
       DarwinNotificationCategory(
         'PRAYER_CATEGORY',
         actions: [
+          // No `foreground` option → the action is handled silently in the
+          // background without bringing the app to the foreground.
           DarwinNotificationAction.plain(
             'mark_done_action',
             l10n.notifMarkDone,
@@ -192,7 +190,6 @@ class NotificationService {
       return;
     }
 
-    // Resolve the strings for the current language.
     final l10n = _resolveL10n(settings.language.name);
 
     int notificationId = 0;
@@ -258,7 +255,11 @@ class NotificationService {
           AndroidNotificationAction(
             'mark_done_action',
             l10n.notifMarkDone,
-            showsUserInterface: true,
+            // 👇 false = handle silently in the background, don't launch
+            //    the app. The action is delivered to
+            //    `notificationTapBackground` instead of the foreground
+            //    `onNotificationResponse` callback.
+            showsUserInterface: false,
             cancelNotification: true,
           ),
         ],
