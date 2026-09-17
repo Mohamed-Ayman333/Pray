@@ -148,12 +148,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // On resume from background, catch up on any missed days and re-arm
-    // the midnight timer (iOS suspends timers while backgrounded).
-    if (state == AppLifecycleState.resumed) {
-      _runAutoIncrement();
-      _scheduleMidnightCheck();
-    }
+    if (state != AppLifecycleState.resumed) return;
+
+    // 1. Catch up on any missed days and re-arm the midnight timer
+    //    (iOS suspends timers while backgrounded).
+    _runAutoIncrement();
+    _scheduleMidnightCheck();
+
+    // 2. Reload today's data so a "Mark as Done" tap from a notification
+    //    action (handled in a background isolate) is reflected in the UI.
+    _reloadToday();
   }
 
   /// Schedules a one-shot timer for the next local midnight, then reschedules
@@ -182,6 +186,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     await userState.applyDailyAutoIncrement(
       settings.currentSettings.autoIncrementOptionalPrayerCounterBy,
     );
+  }
+
+  /// Reloads today's [Day] from storage, pulling in any changes written by
+  /// the background notification-action isolate. Cheap when nothing changed
+  /// (Isar read + in-memory map assignment).
+  Future<void> _reloadToday() async {
+    if (!mounted) return;
+    final daysController = context.read<DaysController>();
+    await daysController.loadDay(DateTime.now());
   }
 
   @override
