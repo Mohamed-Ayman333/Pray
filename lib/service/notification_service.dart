@@ -54,10 +54,19 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
-  static const String _channelId = 'prayer_channel';
+  // Bumped from 'prayer_channel' to force Android to recreate the channel
+  // with the custom sound. Channels are immutable once created.
+  static const String _channelId = 'prayer_channel_v2';
   static const String _channelName = 'Prayer Reminders';
   static const String _channelDescription =
       'Notifications for upcoming prayer times';
+
+  // Android: file lives at android/app/src/main/res/raw/adhan.ogg
+  //          reference by name only, no extension.
+  // iOS:     file added to ios/Runner via Xcode as adhan.caf
+  //          reference by full filename including extension.
+  static const String _androidSound = 'adhan';
+  static const String _iosSound = 'adhan.caf';
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -127,24 +136,24 @@ class NotificationService {
         >();
 
     if (androidImplementation != null) {
-      const channel = AndroidNotificationChannel(
+      final channel = AndroidNotificationChannel(
         _channelId,
         _channelName,
         description: _channelDescription,
         importance: Importance.max,
         playSound: true,
+        sound: const RawResourceAndroidNotificationSound(_androidSound),
         enableVibration: true,
       );
       await androidImplementation.createNotificationChannel(channel);
-      debugPrint('[notif] channel created');
+      debugPrint('[notif] channel created: $_channelId (sound=$_androidSound)');
 
       // Notifications (Android 13+)
       final bool? notifGranted = await androidImplementation
           .requestNotificationsPermission();
       debugPrint('[notif] notifications permission granted: $notifGranted');
 
-      // Exact alarms (Android 12+). This opens the system settings screen
-      // if the user needs to grant it manually.
+      // Exact alarms (Android 12+)
       final bool? exactGranted = await androidImplementation
           .requestExactAlarmsPermission();
       debugPrint('[notif] exact alarm permission granted: $exactGranted');
@@ -225,6 +234,7 @@ class NotificationService {
         channelDescription: _channelDescription,
         importance: Importance.max,
         priority: Priority.high,
+        sound: const RawResourceAndroidNotificationSound(_androidSound),
         ongoing: settings.stickyNotifications,
         autoCancel: !settings.stickyNotifications,
         additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
@@ -239,6 +249,7 @@ class NotificationService {
       ),
       iOS: const DarwinNotificationDetails(
         categoryIdentifier: 'PRAYER_CATEGORY',
+        sound: _iosSound,
       ),
     );
 
