@@ -22,8 +22,13 @@ const UserStateSchema = CollectionSchema(
       name: r'hasPromptedBatteryExemption',
       type: IsarType.bool,
     ),
-    r'optionalPrayerCounter': PropertySchema(
+    r'lastAutoIncrementDate': PropertySchema(
       id: 1,
+      name: r'lastAutoIncrementDate',
+      type: IsarType.dateTime,
+    ),
+    r'optionalPrayerCounter': PropertySchema(
+      id: 2,
       name: r'optionalPrayerCounter',
       type: IsarType.long,
     )
@@ -58,7 +63,8 @@ void _userStateSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.hasPromptedBatteryExemption);
-  writer.writeLong(offsets[1], object.optionalPrayerCounter);
+  writer.writeDateTime(offsets[1], object.lastAutoIncrementDate);
+  writer.writeLong(offsets[2], object.optionalPrayerCounter);
 }
 
 UserState _userStateDeserialize(
@@ -69,7 +75,8 @@ UserState _userStateDeserialize(
 ) {
   final object = UserState(
     hasPromptedBatteryExemption: reader.readBoolOrNull(offsets[0]) ?? false,
-    optionalPrayerCounter: reader.readLongOrNull(offsets[1]) ?? 0,
+    lastAutoIncrementDate: reader.readDateTimeOrNull(offsets[1]),
+    optionalPrayerCounter: reader.readLongOrNull(offsets[2]) ?? 0,
   );
   object.id = id;
   return object;
@@ -85,6 +92,8 @@ P _userStateDeserializeProp<P>(
     case 0:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 1:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 2:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -246,6 +255,80 @@ extension UserStateQueryFilter
   }
 
   QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastAutoIncrementDate',
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastAutoIncrementDate',
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastAutoIncrementDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastAutoIncrementDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastAutoIncrementDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
+      lastAutoIncrementDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastAutoIncrementDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterFilterCondition>
       optionalPrayerCounterEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -324,6 +407,20 @@ extension UserStateQuerySortBy on QueryBuilder<UserState, UserState, QSortBy> {
   }
 
   QueryBuilder<UserState, UserState, QAfterSortBy>
+      sortByLastAutoIncrementDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastAutoIncrementDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
+      sortByLastAutoIncrementDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastAutoIncrementDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
       sortByOptionalPrayerCounter() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'optionalPrayerCounter', Sort.asc);
@@ -367,6 +464,20 @@ extension UserStateQuerySortThenBy
   }
 
   QueryBuilder<UserState, UserState, QAfterSortBy>
+      thenByLastAutoIncrementDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastAutoIncrementDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
+      thenByLastAutoIncrementDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastAutoIncrementDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QAfterSortBy>
       thenByOptionalPrayerCounter() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'optionalPrayerCounter', Sort.asc);
@@ -387,6 +498,13 @@ extension UserStateQueryWhereDistinct
       distinctByHasPromptedBatteryExemption() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'hasPromptedBatteryExemption');
+    });
+  }
+
+  QueryBuilder<UserState, UserState, QDistinct>
+      distinctByLastAutoIncrementDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastAutoIncrementDate');
     });
   }
 
@@ -413,6 +531,13 @@ extension UserStateQueryProperty
     });
   }
 
+  QueryBuilder<UserState, DateTime?, QQueryOperations>
+      lastAutoIncrementDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastAutoIncrementDate');
+    });
+  }
+
   QueryBuilder<UserState, int, QQueryOperations>
       optionalPrayerCounterProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -430,10 +555,15 @@ UserState _$UserStateFromJson(Map<String, dynamic> json) => UserState(
           (json['optionalPrayerCounter'] as num?)?.toInt() ?? 0,
       hasPromptedBatteryExemption:
           json['hasPromptedBatteryExemption'] as bool? ?? false,
+      lastAutoIncrementDate: json['lastAutoIncrementDate'] == null
+          ? null
+          : DateTime.parse(json['lastAutoIncrementDate'] as String),
     )..id = (json['id'] as num).toInt();
 
 Map<String, dynamic> _$UserStateToJson(UserState instance) => <String, dynamic>{
       'id': instance.id,
       'optionalPrayerCounter': instance.optionalPrayerCounter,
       'hasPromptedBatteryExemption': instance.hasPromptedBatteryExemption,
+      'lastAutoIncrementDate':
+          instance.lastAutoIncrementDate?.toIso8601String(),
     };

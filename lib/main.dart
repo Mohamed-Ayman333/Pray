@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:geolocator/geolocator.dart';
@@ -40,6 +42,12 @@ void main() async {
   );
 
   await userStateController.init();
+
+  // Apply the daily optional-prayer auto-increment once at startup.
+  // (Fires again at midnight and on app resume via _MyAppState.)
+  await userStateController.applyDailyAutoIncrement(
+    settingsController.currentSettings.autoIncrementOptionalPrayerCounterBy,
+  );
 
   Future<void> handleNotificationResponse(NotificationResponse response) async {
     debugPrint(
@@ -114,8 +122,67 @@ Future<void> _refreshLocationInBackground(SettingsController settings) async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  Timer? _midnightTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleMidnightCheck();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnightTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // On resume from background, catch up on any missed days and re-arm
+    // the midnight timer (iOS suspends timers while backgrounded).
+    if (state == AppLifecycleState.resumed) {
+      _runAutoIncrement();
+      _scheduleMidnightCheck();
+    }
+  }
+
+  /// Schedules a one-shot timer for the next local midnight, then reschedules
+  /// itself in the callback so it keeps firing day after day.
+  void _scheduleMidnightCheck() {
+    _midnightTimer?.cancel();
+
+    final now = DateTime.now();
+    // `DateTime(now.year, now.month, now.day + 1)` correctly handles month
+    // rollover and DST (the local-timezone constructor normalizes it).
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = nextMidnight.difference(now);
+
+    debugPrint('[lifecycle] next auto-increment check in $delay');
+
+    _midnightTimer = Timer(delay, () {
+      _runAutoIncrement();
+      _scheduleMidnightCheck();
+    });
+  }
+
+  Future<void> _runAutoIncrement() async {
+    if (!mounted) return;
+    final settings = context.read<SettingsController>();
+    final userState = context.read<UserStateController>();
+    await userState.applyDailyAutoIncrement(
+      settings.currentSettings.autoIncrementOptionalPrayerCounterBy,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
