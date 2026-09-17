@@ -14,12 +14,15 @@ class DaysList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     if (dayData == null) {
-      return const Center(child: Text("Loading Today's Prayers"));
+      return Center(child: Text(l10n.loadingTodaysPrayers));
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeFormat = DateFormat('hh:mm a');
+    final locale = Localizations.localeOf(context).toString();
+    final timeFormat = DateFormat('hh:mm a', locale);
 
     final containerBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final borderColor = isDark
@@ -49,16 +52,16 @@ class DaysList extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 12.0),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: Text('PRAYER', style: _headerStyle)),
-                Text('TIME', style: _headerStyle),
-                SizedBox(width: 24),
-                Text('STATUS', style: _headerStyle),
-                SizedBox(width: 8),
+                Expanded(child: Text(l10n.columnPrayer, style: _headerStyle)),
+                Text(l10n.columnTime, style: _headerStyle),
+                const SizedBox(width: 24),
+                Text(l10n.columnStatus, style: _headerStyle),
+                const SizedBox(width: 8),
               ],
             ),
           ),
@@ -102,7 +105,7 @@ class DaysList extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        prayerName,
+                        l10n.prayerDisplayName(prayerName),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

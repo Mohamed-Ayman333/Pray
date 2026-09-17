@@ -1,0 +1,87 @@
+{
+  "@@locale": "ar",
+
+  "appTitle": "صلّي",
+
+  "comingNext": "الصلاة القادمة",
+  "countdown": "الوقت المتبقي",
+  "dayView": "عرض اليوم",
+  "thirtyDayView": "عرض ٣٠ يومًا",
+  "loadingTodaysPrayers": "جارٍ تحميل صلوات اليوم",
+
+  "columnPrayer": "الصلاة",
+  "columnTime": "الوقت",
+  "columnStatus": "الحالة",
+  "todayLabel": "اليوم",
+
+  "prayerFajr": "الفجر",
+  "prayerSunrise": "الشروق",
+  "prayerDhuhr": "الظهر",
+  "prayerAsr": "العصر",
+  "prayerMaghrib": "المغرب",
+  "prayerIsha": "العشاء",
+
+  "prayerHistory": "سجل الصلوات",
+  "missedPrayersQada": "الصلوات الفائتة (قضاء)",
+  "missedPrayers": "الصلوات الفائتة",
+  "markDone": "تم",
+
+  "settingsTitle": "الإعدادات",
+  "preferencesAndCalculation": "التفضيلات وحساب الصلاة",
+  "calculationAndJurisprudence": "الحساب والفقه",
+  "calculationMethod": "طريقة الحساب",
+  "jurisprudenceSchool": "المذهب الفقهي",
+  "standardMadhab": "القياسي (الشافعي، الحنبلي، المالكي)",
+  "hanafiMadhab": "الحنفي (ظل مضاعف)",
+
+  "notificationsAndAlerts": "الإشعارات والتنبيهات",
+  "notificationsLabel": "الإشعارات",
+  "notificationsSubtitle": "تفعيل تنبيهات وتذكيرات الصلاة",
+  "stickyNotifications": "الإشعارات الثابتة",
+  "stickyNotificationsSubtitle": "إبقاء الإشعار حتى يتم تأدية الصلاة",
+  "repeatNotificationSound": "تكرار صوت الإشعار",
+  "repeatNotificationSoundSubtitle": "تكرار صوت التنبيه حتى تقوم بإغلاقه",
+
+  "languageLabel": "اللغة",
+  "languageEnglish": "الإنجليزية",
+  "languageArabic": "العربية",
+
+  "valuesAndAdjustments": "القيم والتعديلات",
+  "optionalPrayerCounterAutoIncrement": "الزيادة التلقائية اليومية لعداد الصلوات النافلة",
+
+  "appearanceAndTheme": "المظهر والسمة",
+  "themeMode": "وضع السمة",
+  "themeLight": "فاتح",
+  "themeDark": "داكن",
+
+  "calculationMethodMuslimWorldLeague": "رابطة العالم الإسلامي",
+  "calculationMethodEgyptian": "الهيئة المصرية العامة للمساحة",
+  "calculationMethodKarachi": "جامعة العلوم الإسلامية، كراتشي",
+  "calculationMethodUmmAlQura": "جامعة أم القرى، مكة المكرمة",
+  "calculationMethodDubai": "دبي",
+  "calculationMethodMoonsightingCommittee": "لجنة رؤية الهلال",
+  "calculationMethodNorthAmerica": "الجمعية الإسلامية لأمريكا الشمالية",
+  "calculationMethodKuwait": "الكويت",
+  "calculationMethodQatar": "قطر",
+  "calculationMethodSingapore": "سنغافورة",
+  "calculationMethodTehran": "معهد الجيوفيزياء، طهران",
+  "calculationMethodTurkey": "رئاسة الشؤون الدينية التركية",
+  "calculationMethodOther": "أخرى / مخصص",
+
+  "batteryPromptTitle": "حافظ على وصول التذكيرات في وقتها",
+  "batteryPromptMessage": "قد يؤخر أندرويد الإشعارات أو يكتم صوتها أحيانًا عندما يكون التطبيق في الخلفية. لضمان وصول تذكيرات الصلاة في وقتها، اسمح لهذا التطبيق بتجاهل تحسينات البطارية.",
+  "batteryPromptLater": "لاحقًا",
+  "batteryPromptAllow": "السماح",
+
+  "notifChannelName": "تذكيرات الصلاة",
+  "notifChannelDescription": "إشعارات لأوقات الصلاة القادمة",
+  "notifMarkDone": "تحديد كمنتهية",
+  "notifTimeFor": "حان وقت صلاة {prayer}",
+  "@notifTimeFor": {
+    "placeholders": { "prayer": { "type": "String" } }
+  },
+  "notifItIsTimeFor": "حان الآن وقت صلاة {prayer}.",
+  "@notifItIsTimeFor": {
+    "placeholders": { "prayer": { "type": "String" } }
+  }
+}

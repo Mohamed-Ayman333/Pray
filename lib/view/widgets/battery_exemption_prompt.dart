@@ -5,14 +5,8 @@ import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:provider/provider.dart';
 
 import 'package:pray/controller/user_state_controller.dart';
+import 'package:pray/l10n/app_localizations.dart';
 
-/// One-shot prompt asking the user to exempt the app from battery
-/// optimizations, so scheduled prayer notifications aren't delayed or
-/// silently dropped by Android's Doze / OEM task killers.
-///
-/// Must be mounted below the [ChangeNotifierProvider] for
-/// [UserStateController] (i.e. inside [MainShell]) because it reads the
-/// persisted `hasPromptedBatteryExemption` flag from the controller.
 class BatteryExemptionPrompt extends StatefulWidget {
   const BatteryExemptionPrompt({super.key, required this.child});
 
@@ -44,6 +38,7 @@ class _BatteryExemptionPromptState extends State<BatteryExemptionPrompt>
     _checked = true;
 
     final controller = context.read<UserStateController>();
+    final l10n = AppLocalizations.of(context);
 
     if (controller.currentUserState.hasPromptedBatteryExemption) {
       debugPrint('[battery] prompt already shown previously');
@@ -64,24 +59,19 @@ class _BatteryExemptionPromptState extends State<BatteryExemptionPrompt>
         context: context,
         barrierDismissible: true,
         builder: (ctx) => AlertDialog(
-          title: const Text('Keep reminders on time'),
-          content: const Text(
-            'Android sometimes delays or silences notifications when the '
-            'app is in the background. To make sure you receive prayer '
-            'reminders on time, allow this app to ignore battery '
-            'optimizations.',
-          ),
+          title: Text(l10n.batteryPromptTitle),
+          content: Text(l10n.batteryPromptMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Later'),
+              child: Text(l10n.batteryPromptLater),
             ),
             FilledButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 await ph.Permission.ignoreBatteryOptimizations.request();
               },
-              child: const Text('Allow'),
+              child: Text(l10n.batteryPromptAllow),
             ),
           ],
         ),

@@ -23,13 +23,6 @@ class DaysRepository implements IDaysStorage {
     return targetDate.isBefore(today);
   }
 
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime.utc(now.year, now.month, now.day);
-    final targetDate = _toNormalizedUtc(date);
-    return targetDate.isAtSameMomentAs(today);
-  }
-
   /// Central logic for toggling prayer completion state and persisting locally
   Future<void> togglePrayer(DateTime date, String prayerName) async {
     final normalizedDate = _toNormalizedUtc(date);

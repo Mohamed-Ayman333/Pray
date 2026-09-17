@@ -15,6 +15,7 @@ class ViewSwitcher extends StatelessWidget {
     required IconData icon,
     required String label,
     required bool isSelected,
+    required bool isDayButton,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -23,7 +24,7 @@ class ViewSwitcher extends StatelessWidget {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => onViewChanged(label == 'Day View'),
+        onTap: () => onViewChanged(isDayButton),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -52,6 +53,7 @@ class ViewSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final containerBg = isDark
         ? const Color(0xFF1E293B)
@@ -68,14 +70,16 @@ class ViewSwitcher extends StatelessWidget {
           _buildButton(
             context: context,
             icon: Icons.calendar_today_outlined,
-            label: 'Day View',
+            label: l10n.dayView,
             isSelected: isDayViewSelected,
+            isDayButton: true,
           ),
           _buildButton(
             context: context,
             icon: Icons.grid_view_outlined,
-            label: '30-Day View',
+            label: l10n.thirtyDayView,
             isSelected: !isDayViewSelected,
+            isDayButton: false,
           ),
         ],
       ),

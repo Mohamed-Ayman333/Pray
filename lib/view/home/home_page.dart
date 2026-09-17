@@ -6,10 +6,12 @@ import 'package:intl/intl.dart';
 import '../../controller/days_controller.dart';
 import '../../controller/settings_controller.dart';
 import '../../controller/user_state_controller.dart';
+import '../../l10n/app_localizations.dart';
 import '../../model/types/day.dart';
 import '../../model/types/prayer.dart';
 import '../theme/app_colors.dart';
 import 'widgets/theme_toggle_button.dart';
+import '../../l10n/app_localizations_extension.dart';
 
 part 'widgets/header_card.dart';
 part 'widgets/view_switcher.dart';
@@ -25,16 +27,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Local state to track selected view (Day or 30-Day)
   bool _isDayViewSelected = true;
   Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
-    // Start periodic timer to refresh countdown in Header
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {}); // Rebuild header to update countdown text
+      setState(() {});
     });
   }
 
@@ -46,11 +46,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to changes in controllers
     final daysController = context.watch<DaysController>();
     final settingsController = context.watch<SettingsController>();
+    final l10n = AppLocalizations.of(context);
 
-    // Safety fallback if database isn't init yet
     if (!settingsController.isInitialized) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -59,17 +58,14 @@ class _HomePageState extends State<HomePage> {
     final todayNormalized = DateTime.utc(today.year, today.month, today.day);
     final dayData = daysController.getDay(todayNormalized);
 
-    // Get Next Prayer info safely
     final nextPrayer = daysController.nextPrayer;
     final timeUntilNext = daysController.timeUntilNextPrayer;
 
-    // Utilize colors from ThemeExtension
     final themeColors = Theme.of(context).extension<PrayerThemeColors>()!;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // 1. App Bar with Logo, Title, and Dark Mode Toggle
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -79,7 +75,7 @@ class _HomePageState extends State<HomePage> {
             Image.asset('assets/images/logo.jpg', height: 32),
             const SizedBox(width: 12),
             Text(
-              'Pray',
+              l10n.appTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
@@ -107,26 +103,20 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              // 2. Main Next Prayer Header Card
               HeaderCard(
                 nextPrayer: nextPrayer,
                 timeUntilNext: timeUntilNext,
                 themeColors: themeColors,
               ),
               const SizedBox(height: 24),
-
-              // 3. View Switcher Toggle Button Group
               ViewSwitcher(
                 isDayViewSelected: _isDayViewSelected,
                 onViewChanged: (isDayView) {
                   setState(() => _isDayViewSelected = isDayView);
-                  // Load 30 days if user switches to table view
                   if (!isDayView) daysController.loadNext30Days();
                 },
               ),
               const SizedBox(height: 24),
-
-              // 4. Content Area: Toggle between List and Table
               _isDayViewSelected
                   ? DaysList(
                       dayData: dayData,
@@ -134,12 +124,8 @@ class _HomePageState extends State<HomePage> {
                       onToggle: daysController.togglePrayer,
                     )
                   : DaysTable(daysController: daysController),
-
               const SizedBox(height: 24),
-
-              // 5. Optional Prayer Counter Segment
               const OptionalPrayerCounter(),
-
               const SizedBox(height: 32),
             ],
           ),

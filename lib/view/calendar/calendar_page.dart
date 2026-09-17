@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../controller/days_controller.dart';
 import '../../controller/settings_controller.dart';
+import '../../l10n/app_localizations.dart';
+import '../../l10n/app_localizations_extension.dart';
 import '../theme/app_colors.dart';
 import '../home/widgets/theme_toggle_button.dart';
 
@@ -26,7 +28,6 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
     _selectedMonth = DateTime.utc(now.year, now.month, 1);
   }
 
-  /// Explicit reset method called when switching tabs or resetting view.
   void resetView() {
     if (_selectedDayForQada != null) {
       setState(() {
@@ -55,6 +56,12 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
   void _showMonthYearPicker(BuildContext context, ColorScheme colorScheme) {
     int tempYear = _selectedMonth.year;
     final now = DateTime.now();
+    final locale = Localizations.localeOf(context).toString();
+
+    final months = List.generate(
+      12,
+      (i) => DateFormat.MMM(locale).format(DateTime(2024, i + 1, 1)),
+    );
 
     showModalBottomSheet(
       context: context,
@@ -65,21 +72,6 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final months = [
-              'Jan',
-              'Feb',
-              'Mar',
-              'Apr',
-              'May',
-              'Jun',
-              'Jul',
-              'Aug',
-              'Sep',
-              'Oct',
-              'Nov',
-              'Dec',
-            ];
-
             return Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -179,6 +171,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
   Widget build(BuildContext context) {
     final settingsController = context.watch<SettingsController>();
     final daysController = context.watch<DaysController>();
+    final l10n = AppLocalizations.of(context);
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -195,7 +188,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
             Image.asset('assets/images/logo.jpg', height: 32),
             const SizedBox(width: 12),
             Text(
-              'Pray',
+              l10n.appTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
@@ -254,12 +247,15 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
     ColorScheme colorScheme,
     PrayerThemeColors themeColors,
   ) {
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toString();
+
     final titleText = _selectedDayForQada != null
-        ? 'Missed Prayers (Qada)'
-        : 'Prayer History';
+        ? l10n.missedPrayersQada
+        : l10n.prayerHistory;
 
     final subtitleText = _selectedDayForQada != null
-        ? DateFormat('EEEE, d MMM yyyy').format(_selectedDayForQada!)
+        ? DateFormat('EEEE, d MMM yyyy', locale).format(_selectedDayForQada!)
         : null;
 
     return Row(
@@ -316,6 +312,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
   }
 
   Widget _buildMonthDropdown(BuildContext context, ColorScheme colorScheme) {
+    final locale = Localizations.localeOf(context).toString();
     final now = DateTime.now();
     final isCurrentMonth =
         _selectedMonth.year == now.year && _selectedMonth.month == now.month;
@@ -345,7 +342,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Text(
-                DateFormat('MMMM yyyy').format(_selectedMonth),
+                DateFormat('MMMM yyyy', locale).format(_selectedMonth),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -381,6 +378,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
     ColorScheme colorScheme,
     PrayerThemeColors themeColors,
   ) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final now = DateTime.now();
     final today = DateTime.utc(now.year, now.month, now.day);
@@ -509,7 +507,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            'TODAY',
+                            l10n.todayLabel,
                             style: TextStyle(
                               fontSize: 8,
                               fontWeight: FontWeight.bold,
@@ -557,6 +555,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
     ColorScheme colorScheme,
     PrayerThemeColors themeColors,
   ) {
+    final l10n = AppLocalizations.of(context);
     final dayData = daysController.getDay(date);
     final pendingPrayers = dayData?.pendingPrayers ?? [];
 
@@ -573,7 +572,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
         Row(
           children: [
             Text(
-              'Missed Prayers',
+              l10n.missedPrayers,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -620,7 +619,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    prayer.name,
+                    l10n.prayerDisplayName(prayer.name),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -632,7 +631,7 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                       await daysController.togglePrayer(date, prayer.name);
                     },
                     icon: const Icon(Icons.check, size: 18),
-                    label: const Text('Mark Done'),
+                    label: Text(l10n.markDone),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           themeColors.prayerDone ?? colorScheme.primary,

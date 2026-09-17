@@ -23,11 +23,16 @@ class HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (nextPrayer == null) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timeFormat = DateFormat('hh:mm a');
+    final locale = Localizations.localeOf(context).toString();
+    final timeFormat = DateFormat('hh:mm a', locale);
+
     final formattedTime = nextPrayer!.time != null
         ? timeFormat.format(nextPrayer!.time!)
         : '--:--';
+
+    final prayerDisplay = l10n.prayerDisplayName(nextPrayer!.name);
 
     final primaryTextColor = isDark
         ? Colors.white
@@ -56,7 +61,7 @@ class HeaderCard extends StatelessWidget {
               Icon(Icons.circle, size: 12, color: primaryTextColor),
               const SizedBox(width: 8),
               Text(
-                'COMING NEXT',
+                l10n.comingNext,
                 style: TextStyle(
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.bold,
@@ -75,7 +80,7 @@ class HeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    nextPrayer!.name,
+                    prayerDisplay,
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
@@ -98,7 +103,7 @@ class HeaderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Countdown',
+                    l10n.countdown,
                     style: TextStyle(fontSize: 14, color: secondaryTextColor),
                   ),
                   const SizedBox(height: 4),

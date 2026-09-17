@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controller/settings_controller.dart';
+import '../../l10n/app_localizations.dart';
 import '../../model/types/language.dart';
 import '../home/widgets/theme_toggle_button.dart';
 
@@ -14,35 +15,34 @@ part 'widgets/settings_switch_tile.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  /// Helper method to format enum values into user-friendly titles
-  String _formatMethodName(CalculationMethod method) {
+  String _formatMethodName(CalculationMethod method, AppLocalizations l10n) {
     switch (method) {
       case CalculationMethod.muslim_world_league:
-        return 'Muslim World League';
+        return l10n.calculationMethodMuslimWorldLeague;
       case CalculationMethod.egyptian:
-        return 'Egyptian General Authority';
+        return l10n.calculationMethodEgyptian;
       case CalculationMethod.karachi:
-        return 'University of Islamic Sciences, Karachi';
+        return l10n.calculationMethodKarachi;
       case CalculationMethod.umm_al_qura:
-        return 'Umm Al-Qura University, Makkah';
+        return l10n.calculationMethodUmmAlQura;
       case CalculationMethod.dubai:
-        return 'Dubai';
+        return l10n.calculationMethodDubai;
       case CalculationMethod.moon_sighting_committee:
-        return 'Moonsighting Committee';
+        return l10n.calculationMethodMoonsightingCommittee;
       case CalculationMethod.north_america:
-        return 'ISNA (North America)';
+        return l10n.calculationMethodNorthAmerica;
       case CalculationMethod.kuwait:
-        return 'Kuwait';
+        return l10n.calculationMethodKuwait;
       case CalculationMethod.qatar:
-        return 'Qatar';
+        return l10n.calculationMethodQatar;
       case CalculationMethod.singapore:
-        return 'Singapore';
+        return l10n.calculationMethodSingapore;
       case CalculationMethod.tehran:
-        return 'Institute of Geophysics, Tehran';
+        return l10n.calculationMethodTehran;
       case CalculationMethod.turkey:
-        return 'Diyanet İşleri Başkanlığı, Turkey';
+        return l10n.calculationMethodTurkey;
       case CalculationMethod.other:
-        return 'Other / Custom';
+        return l10n.calculationMethodOther;
     }
   }
 
@@ -58,6 +58,7 @@ class SettingsPage extends StatelessWidget {
       ),
       builder: (modalContext) {
         final colorScheme = Theme.of(modalContext).colorScheme;
+        final l10n = AppLocalizations.of(modalContext);
 
         return DraggableScrollableSheet(
           expand: false,
@@ -68,7 +69,6 @@ class SettingsPage extends StatelessWidget {
             return Column(
               children: [
                 const SizedBox(height: 12),
-                // Handle bar indicator
                 Container(
                   width: 36,
                   height: 4,
@@ -86,7 +86,7 @@ class SettingsPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Calculation Method',
+                        l10n.calculationMethod,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class SettingsPage extends StatelessWidget {
                           vertical: 4,
                         ),
                         title: Text(
-                          _formatMethodName(method),
+                          _formatMethodName(method, l10n),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: isSelected
@@ -158,6 +158,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settingsController = context.watch<SettingsController>();
+    final l10n = AppLocalizations.of(context);
 
     if (!settingsController.isInitialized) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -176,7 +177,7 @@ class SettingsPage extends StatelessWidget {
             Image.asset('assets/images/logo.jpg', height: 32),
             const SizedBox(width: 12),
             Text(
-              'Pray',
+              l10n.appTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
@@ -202,7 +203,6 @@ class SettingsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Title Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -210,7 +210,7 @@ class SettingsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Settings',
+                      l10n.settingsTitle,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -219,7 +219,7 @@ class SettingsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Preferences & Prayer Calculation',
+                      l10n.preferencesAndCalculation,
                       style: TextStyle(
                         fontSize: 14,
                         color: colorScheme.onSurfaceVariant,
@@ -245,7 +245,7 @@ class SettingsPage extends StatelessWidget {
 
             // Section 1: Calculation & Jurisprudence
             SettingsSectionCard(
-              title: 'Calculation & Jurisprudence',
+              title: l10n.calculationAndJurisprudence,
               icon: Icons.menu_book_rounded,
               children: [
                 InkWell(
@@ -266,7 +266,7 @@ class SettingsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'CALCULATION METHOD',
+                                l10n.calculationMethod.toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
@@ -278,6 +278,7 @@ class SettingsPage extends StatelessWidget {
                               Text(
                                 _formatMethodName(
                                   settingsController.calculationMethod,
+                                  l10n,
                                 ),
                                 style: TextStyle(
                                   fontSize: 14,
@@ -313,7 +314,7 @@ class SettingsPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'Jurisprudence School',
+                        l10n.jurisprudenceSchool,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -323,15 +324,14 @@ class SettingsPage extends StatelessWidget {
                     ),
                     SettingsSegmentedControl<Madhab>(
                       selectedValue: settingsController.madhab,
-                      items: const [
+                      items: [
                         SegmentItem(
                           value: Madhab.shafi,
-                          label: 'Standard (Shafi, Hanbali, Maliki)',
-                          icon: Icons.check,
+                          label: l10n.standardMadhab,
                         ),
                         SegmentItem(
                           value: Madhab.hanafi,
-                          label: 'Hanafi (Shadow 2x)',
+                          label: l10n.hanafiMadhab,
                         ),
                       ],
                       onChanged: (madhab) =>
@@ -345,29 +345,28 @@ class SettingsPage extends StatelessWidget {
 
             // Section 2: Notifications
             SettingsSectionCard(
-              title: 'Notifications & Alerts',
+              title: l10n.notificationsAndAlerts,
               icon: Icons.notifications_active_rounded,
               children: [
                 SettingsSwitchTile(
-                  title: 'Notifications',
-                  subtitle: 'Enable prayer alerts & reminders',
+                  title: l10n.notificationsLabel,
+                  subtitle: l10n.notificationsSubtitle,
                   value: settingsController.notifications,
                   onChanged: (val) =>
                       settingsController.toggleNotifications(val),
                 ),
                 const SizedBox(height: 8),
                 SettingsSwitchTile(
-                  title: 'Sticky Notifications',
-                  subtitle:
-                      'Keep the notification until the prayer is made done',
+                  title: l10n.stickyNotifications,
+                  subtitle: l10n.stickyNotificationsSubtitle,
                   value: settingsController.stickyNotifications,
                   onChanged: (val) =>
                       settingsController.toggleStickyNotifications(val),
                 ),
                 const SizedBox(height: 8),
                 SettingsSwitchTile(
-                  title: 'Repeat Notification Sound',
-                  subtitle: 'Loop the alert sound until you dismiss it',
+                  title: l10n.repeatNotificationSound,
+                  subtitle: l10n.repeatNotificationSoundSubtitle,
                   value: settingsController.repeatNotifications,
                   onChanged: (val) =>
                       settingsController.toggleRepeatNotifications(val),
@@ -378,18 +377,17 @@ class SettingsPage extends StatelessWidget {
 
             // Section 3: Language
             SettingsSectionCard(
-              title: 'Language',
+              title: l10n.languageLabel,
               icon: Icons.translate_rounded,
               children: [
                 SettingsSegmentedControl<Language>(
                   selectedValue: settingsController.language,
-                  items: const [
+                  items: [
                     SegmentItem(
                       value: Language.en,
-                      label: 'English',
-                      icon: Icons.check,
+                      label: l10n.languageEnglish,
                     ),
-                    SegmentItem(value: Language.ar, label: 'Arabic'),
+                    SegmentItem(value: Language.ar, label: l10n.languageArabic),
                   ],
                   onChanged: (lang) => settingsController.updateLanguage(lang),
                 ),
@@ -399,11 +397,11 @@ class SettingsPage extends StatelessWidget {
 
             // Section 4: Values & Adjustments
             SettingsSectionCard(
-              title: 'Values & Adjustments',
+              title: l10n.valuesAndAdjustments,
               icon: Icons.tune_rounded,
               children: [
                 SettingsStepper(
-                  title: 'Optional Prayer Counter Daily Auto-Increment',
+                  title: l10n.optionalPrayerCounterAutoIncrement,
                   subtitle: null,
                   valueText:
                       '+${settingsController.autoIncrementOptionalPrayerCounterBy}',
@@ -418,7 +416,7 @@ class SettingsPage extends StatelessWidget {
 
             // Section 5: Appearance & Theme
             SettingsSectionCard(
-              title: 'Appearance & Theme',
+              title: l10n.appearanceAndTheme,
               icon: Icons.palette_outlined,
               children: [
                 Column(
@@ -427,7 +425,7 @@ class SettingsPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 8),
                       child: Text(
-                        'THEME MODE',
+                        l10n.themeMode,
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -438,15 +436,15 @@ class SettingsPage extends StatelessWidget {
                     ),
                     SettingsSegmentedControl<bool>(
                       selectedValue: settingsController.isDarkMode,
-                      items: const [
+                      items: [
                         SegmentItem(
                           value: false,
-                          label: 'Light',
+                          label: l10n.themeLight,
                           icon: Icons.wb_sunny_outlined,
                         ),
                         SegmentItem(
                           value: true,
-                          label: 'Dark',
+                          label: l10n.themeDark,
                           icon: Icons.nightlight_round_outlined,
                         ),
                       ],

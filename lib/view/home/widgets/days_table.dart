@@ -7,11 +7,11 @@ class DaysTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final loadedDays = daysController.loadedDays;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final today = DateTime.now();
-    // Normalize to UTC midnight to match DaysController key format
     final todayTruncated = DateTime.utc(today.year, today.month, today.day);
 
     final displayDates = List.generate(31, (index) {
@@ -31,8 +31,9 @@ class DaysTable extends StatelessWidget {
       );
     }
 
-    final dateFormat = DateFormat('dd MMM');
-    final timeFormat = DateFormat('hh:mm');
+    final locale = Localizations.localeOf(context).toString();
+    final dateFormat = DateFormat('dd MMM', locale);
+    final timeFormat = DateFormat('hh:mm', locale);
     final prayerRows = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
     final containerBg = isDark ? const Color(0xFF1E293B) : Colors.white;
@@ -57,7 +58,6 @@ class DaysTable extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         child: Row(
           children: [
-            // Fixed Left Column (Prayer Names)
             Container(
               width: 100,
               decoration: BoxDecoration(
@@ -71,7 +71,7 @@ class DaysTable extends StatelessWidget {
                     color: headerBg,
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: const Text('PRAYER', style: _headerStyle),
+                    child: Text(l10n.columnPrayer, style: _headerStyle),
                   ),
                   ...prayerRows.map((prayerName) {
                     return Container(
@@ -82,7 +82,7 @@ class DaysTable extends StatelessWidget {
                         border: Border(top: BorderSide(color: dividerColor)),
                       ),
                       child: Text(
-                        prayerName,
+                        l10n.prayerDisplayName(prayerName),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: textStyleColor,
@@ -93,8 +93,6 @@ class DaysTable extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Scrollable Right Grid (Dates & Times)
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -102,7 +100,6 @@ class DaysTable extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Dates Header Row
                     Container(
                       height: rowHeight,
                       color: headerBg,
@@ -124,8 +121,6 @@ class DaysTable extends StatelessWidget {
                         }).toList(),
                       ),
                     ),
-
-                    // Prayer Times Rows
                     ...prayerRows.map((prayerName) {
                       return Container(
                         height: rowHeight,

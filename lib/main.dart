@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'package:pray/l10n/app_localizations.dart';
 import 'package:pray/model/storage/app_database.dart';
 import 'package:pray/core/app_core.dart';
 import 'package:pray/model/storage/i_user_state_storage.dart';
@@ -64,6 +66,7 @@ void main() async {
 
   await NotificationService.instance.init(
     onNotificationResponse: handleNotificationResponse,
+    localeName: settingsController.currentSettings.language.name,
   );
 
   _refreshLocationInBackground(settingsController);
@@ -118,10 +121,19 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingsController = context.watch<SettingsController>();
     final isDarkMode = settingsController.currentSettings.darkMode;
+    final locale = Locale(settingsController.currentSettings.language.name);
 
     return MaterialApp(
       title: 'Prayer Times',
       debugShowCheckedModeBanner: false,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,

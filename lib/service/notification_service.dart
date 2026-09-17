@@ -10,6 +10,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'package:pray/core/app_core.dart';
+import 'package:pray/l10n/app_localizations.dart';
+import 'package:pray/l10n/app_localizations_extension.dart';
 import 'package:pray/model/storage/app_database.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
@@ -50,14 +52,27 @@ void notificationTapBackground(NotificationResponse response) async {
   }
 }
 
+/// Resolves the correct generated [AppLocalizations] instance for a locale
+/// name ('en' or 'ar'). Used outside of a widget tree (e.g. from the
+/// notification service) where `AppLocalizations.of(context)` isn't
+/// available.
+///
+/// `lookupAppLocalizations` is a top-level function generated into
+/// `app_localizations.dart`; it dispatches to the correct concrete
+/// subclass (`AppLocalizationsEn`, `AppLocalizationsAr`, ...).
+AppLocalizations _resolveL10n(String localeName) {
+  try {
+    return lookupAppLocalizations(Locale(localeName));
+  } catch (_) {
+    return lookupAppLocalizations(const Locale('en'));
+  }
+}
+
 class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
   static const String _channelId = 'prayer_channel_v2';
-  static const String _channelName = 'Prayer Reminders';
-  static const String _channelDescription =
-      'Notifications for upcoming prayer times';
 
   static const String _androidSound = 'adhan';
   static const String _iosSound = 'adhan.caf';
@@ -69,6 +84,7 @@ class NotificationService {
 
   Future<void> init({
     required Function(NotificationResponse) onNotificationResponse,
+    String localeName = 'en',
   }) async {
     if (_initialized) return;
 
@@ -83,6 +99,9 @@ class NotificationService {
       tz.setLocalLocation(tz.UTC);
     }
 
+    // ---- Localizations (needed for channel name/description) ----
+    final l10n = _resolveL10n(localeName);
+
     // ---- Init settings ----
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/launcher_icon',
@@ -94,7 +113,7 @@ class NotificationService {
         actions: [
           DarwinNotificationAction.plain(
             'mark_done_action',
-            'Mark as Done',
+            l10n.notifMarkDone,
             options: const <DarwinNotificationActionOption>{},
           ),
         ],
@@ -132,8 +151,8 @@ class NotificationService {
     if (androidImplementation != null) {
       final channel = AndroidNotificationChannel(
         _channelId,
-        _channelName,
-        description: _channelDescription,
+        l10n.notifChannelName,
+        description: l10n.notifChannelDescription,
         importance: Importance.max,
         playSound: true,
         sound: const RawResourceAndroidNotificationSound(_androidSound),
@@ -142,18 +161,15 @@ class NotificationService {
       await androidImplementation.createNotificationChannel(channel);
       debugPrint('[notif] channel created: $_channelId (sound=$_androidSound)');
 
-      // Notifications (Android 13+)
       final bool? notifGranted = await androidImplementation
           .requestNotificationsPermission();
       debugPrint('[notif] notifications permission granted: $notifGranted');
 
-      // Exact alarms (Android 12+)
       final bool? exactGranted = await androidImplementation
           .requestExactAlarmsPermission();
       debugPrint('[notif] exact alarm permission granted: $exactGranted');
     }
 
-    // ---- iOS permission ----
     await _plugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
@@ -176,9 +192,12 @@ class NotificationService {
       return;
     }
 
+    // Resolve the strings for the current language.
+    final l10n = _resolveL10n(settings.language.name);
+
     int notificationId = 0;
     final now = DateTime.now();
-    final repeatSound = settings.repeatNotifications; // 👈 updated
+    final repeatSound = settings.repeatNotifications;
     int scheduled = 0;
 
     for (final day in days) {
@@ -189,14 +208,16 @@ class NotificationService {
         if (time == null || !time.isAfter(now)) continue;
 
         try {
+          final displayName = l10n.prayerDisplayName(prayer.name);
           await _scheduleSingleNotification(
             id: notificationId++,
-            title: 'Time for ${prayer.name}',
-            body: 'It is time for ${prayer.name} prayer.',
+            title: l10n.notifTimeFor(displayName),
+            body: l10n.notifItIsTimeFor(displayName),
             scheduledTime: time,
             settings: settings,
             payload: '${day.date?.toIso8601String()}|${prayer.name}',
             repeatSound: repeatSound,
+            l10n: l10n,
           );
           scheduled++;
         } catch (e, st) {
@@ -217,6 +238,7 @@ class NotificationService {
     required DateTime scheduledTime,
     required Settings settings,
     required String payload,
+    required AppLocalizations l10n,
     bool repeatSound = false,
   }) async {
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
@@ -224,18 +246,18 @@ class NotificationService {
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
+        l10n.notifChannelName,
+        channelDescription: l10n.notifChannelDescription,
         importance: Importance.max,
         priority: Priority.high,
         sound: const RawResourceAndroidNotificationSound(_androidSound),
         ongoing: settings.stickyNotifications,
         autoCancel: !settings.stickyNotifications,
         additionalFlags: repeatSound ? Int32List.fromList(<int>[4]) : null,
-        actions: const [
+        actions: [
           AndroidNotificationAction(
             'mark_done_action',
-            'Mark as Done',
+            l10n.notifMarkDone,
             showsUserInterface: true,
             cancelNotification: true,
           ),

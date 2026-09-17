@@ -1,0 +1,87 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Pray",
+
+  "comingNext": "COMING NEXT",
+  "countdown": "Countdown",
+  "dayView": "Day View",
+  "thirtyDayView": "30-Day View",
+  "loadingTodaysPrayers": "Loading Today's Prayers",
+
+  "columnPrayer": "PRAYER",
+  "columnTime": "TIME",
+  "columnStatus": "STATUS",
+  "todayLabel": "TODAY",
+
+  "prayerFajr": "Fajr",
+  "prayerSunrise": "Sunrise",
+  "prayerDhuhr": "Dhuhr",
+  "prayerAsr": "Asr",
+  "prayerMaghrib": "Maghrib",
+  "prayerIsha": "Isha",
+
+  "prayerHistory": "Prayer History",
+  "missedPrayersQada": "Missed Prayers (Qada)",
+  "missedPrayers": "Missed Prayers",
+  "markDone": "Mark Done",
+
+  "settingsTitle": "Settings",
+  "preferencesAndCalculation": "Preferences & Prayer Calculation",
+  "calculationAndJurisprudence": "Calculation & Jurisprudence",
+  "calculationMethod": "Calculation Method",
+  "jurisprudenceSchool": "Jurisprudence School",
+  "standardMadhab": "Standard (Shafi, Hanbali, Maliki)",
+  "hanafiMadhab": "Hanafi (Shadow 2x)",
+
+  "notificationsAndAlerts": "Notifications & Alerts",
+  "notificationsLabel": "Notifications",
+  "notificationsSubtitle": "Enable prayer alerts & reminders",
+  "stickyNotifications": "Sticky Notifications",
+  "stickyNotificationsSubtitle": "Keep the notification until the prayer is made done",
+  "repeatNotificationSound": "Repeat Notification Sound",
+  "repeatNotificationSoundSubtitle": "Loop the alert sound until you dismiss it",
+
+  "languageLabel": "Language",
+  "languageEnglish": "English",
+  "languageArabic": "Arabic",
+
+  "valuesAndAdjustments": "Values & Adjustments",
+  "optionalPrayerCounterAutoIncrement": "Optional Prayer Counter Daily Auto-Increment",
+
+  "appearanceAndTheme": "Appearance & Theme",
+  "themeMode": "THEME MODE",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+
+  "calculationMethodMuslimWorldLeague": "Muslim World League",
+  "calculationMethodEgyptian": "Egyptian General Authority",
+  "calculationMethodKarachi": "University of Islamic Sciences, Karachi",
+  "calculationMethodUmmAlQura": "Umm Al-Qura University, Makkah",
+  "calculationMethodDubai": "Dubai",
+  "calculationMethodMoonsightingCommittee": "Moonsighting Committee",
+  "calculationMethodNorthAmerica": "ISNA (North America)",
+  "calculationMethodKuwait": "Kuwait",
+  "calculationMethodQatar": "Qatar",
+  "calculationMethodSingapore": "Singapore",
+  "calculationMethodTehran": "Institute of Geophysics, Tehran",
+  "calculationMethodTurkey": "Diyanet İşleri Başkanlığı, Turkey",
+  "calculationMethodOther": "Other / Custom",
+
+  "batteryPromptTitle": "Keep reminders on time",
+  "batteryPromptMessage": "Android sometimes delays or silences notifications when the app is in the background. To make sure you receive prayer reminders on time, allow this app to ignore battery optimizations.",
+  "batteryPromptLater": "Later",
+  "batteryPromptAllow": "Allow",
+
+  "notifChannelName": "Prayer Reminders",
+  "notifChannelDescription": "Notifications for upcoming prayer times",
+  "notifMarkDone": "Mark as Done",
+  "notifTimeFor": "Time for {prayer}",
+  "@notifTimeFor": {
+    "placeholders": { "prayer": { "type": "String" } }
+  },
+  "notifItIsTimeFor": "It is time for {prayer} prayer.",
+  "@notifItIsTimeFor": {
+    "placeholders": { "prayer": { "type": "String" } }
+  }
+}
