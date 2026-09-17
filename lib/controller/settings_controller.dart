@@ -25,8 +25,7 @@ class SettingsController extends ChangeNotifier {
   Language get language => _currentSettings.language;
   bool get notifications => _currentSettings.notifications;
   bool get stickyNotifications => _currentSettings.stickyNotifications;
-  bool get azan => _currentSettings.azan;
-  int get reminderOffsetInMinutes => _currentSettings.reminderOffsetInMinutes;
+  bool get repeatNotifications => _currentSettings.repeatNotifications;
   int get autoIncrementOptionalPrayerCounterBy =>
       _currentSettings.autoIncrementOptionalPrayerCounterBy;
 
@@ -70,25 +69,11 @@ class SettingsController extends ChangeNotifier {
     await _updateAndSave((s) => s.stickyNotifications = enabled);
   }
 
-  Future<void> toggleAzan(bool enabled) async {
-    await _updateAndSave((s) => s.azan = enabled);
+  Future<void> toggleRepeatNotifications(bool enabled) async {
+    await _updateAndSave((s) => s.repeatNotifications = enabled);
   }
 
   // --- STEPPERS & ADJUSTMENTS ---
-
-  Future<void> updateReminderOffset(int minutes) async {
-    await _updateAndSave(
-      (s) => s.reminderOffsetInMinutes = minutes < 0 ? 0 : minutes,
-    );
-  }
-
-  Future<void> incrementReminderOffset() async {
-    await updateReminderOffset(_currentSettings.reminderOffsetInMinutes + 1);
-  }
-
-  Future<void> decrementReminderOffset() async {
-    await updateReminderOffset(_currentSettings.reminderOffsetInMinutes - 1);
-  }
 
   Future<void> updateAutoIncrementOptionalPrayerCounterBy(int value) async {
     await _updateAndSave(

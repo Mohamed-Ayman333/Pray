@@ -54,17 +54,11 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
-  // Bumped from 'prayer_channel' to force Android to recreate the channel
-  // with the custom sound. Channels are immutable once created.
   static const String _channelId = 'prayer_channel_v2';
   static const String _channelName = 'Prayer Reminders';
   static const String _channelDescription =
       'Notifications for upcoming prayer times';
 
-  // Android: file lives at android/app/src/main/res/raw/adhan.ogg
-  //          reference by name only, no extension.
-  // iOS:     file added to ios/Runner via Xcode as adhan.caf
-  //          reference by full filename including extension.
   static const String _androidSound = 'adhan';
   static const String _iosSound = 'adhan.caf';
 
@@ -184,7 +178,7 @@ class NotificationService {
 
     int notificationId = 0;
     final now = DateTime.now();
-    final repeatSound = settings.reminderOffsetInMinutes > 0;
+    final repeatSound = settings.repeatNotifications; // 👈 updated
     int scheduled = 0;
 
     for (final day in days) {

@@ -343,10 +343,10 @@ class SettingsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Section 2: Notifications & Call to Prayer Audio
+            // Section 2: Notifications
             SettingsSectionCard(
-              title: 'Notifications & Call to Prayer Audio',
-              icon: Icons.volume_up_rounded,
+              title: 'Notifications & Alerts',
+              icon: Icons.notifications_active_rounded,
               children: [
                 SettingsSwitchTile(
                   title: 'Notifications',
@@ -365,10 +365,11 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SettingsSwitchTile(
-                  title: 'Call to Prayer Audio',
-                  subtitle: 'Play audible audio prompt at prayer time',
-                  value: settingsController.azan,
-                  onChanged: (val) => settingsController.toggleAzan(val),
+                  title: 'Repeat Notification Sound',
+                  subtitle: 'Loop the alert sound until you dismiss it',
+                  value: settingsController.repeatNotifications,
+                  onChanged: (val) =>
+                      settingsController.toggleRepeatNotifications(val),
                 ),
               ],
             ),
@@ -400,17 +401,6 @@ class SettingsPage extends StatelessWidget {
               title: 'Values & Adjustments',
               icon: Icons.tune_rounded,
               children: [
-                SettingsStepper(
-                  title: 'Reminder Offset',
-                  subtitle: 'Alert minutes before or after prayer time',
-                  valueText:
-                      '${settingsController.reminderOffsetInMinutes} min',
-                  onIncrement: () =>
-                      settingsController.incrementReminderOffset(),
-                  onDecrement: () =>
-                      settingsController.decrementReminderOffset(),
-                ),
-                const SizedBox(height: 8),
                 SettingsStepper(
                   title: 'Optional Prayer Counter Daily Auto-Increment',
                   subtitle: null,
