@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show PlatformException;
@@ -72,6 +73,20 @@ class NotificationService {
 
   static const String _androidSound = 'adhan';
   static const String _iosSound = 'adhan.caf';
+
+  /// Hard cap on how many notifications we schedule per sync.
+  ///
+  /// The app reloads its notification schedule on every cold start and on
+  /// every resume, so we don't need to schedule the full 30-day window. 60
+  /// notifications ≈ 10 days of prayers at 6/day, which comfortably covers
+  /// the user until their next app open. This also keeps us well under
+  /// Android's per-app exact-alarm quota (Android 14+ rate-limits and
+  /// eventually rejects new alarms beyond a threshold).
+  static const int _maxNotificationsToSchedule = 60;
+
+  /// Per-notification timeout. If a single native `zonedSchedule` call
+  /// hangs, we skip that one instead of blocking the whole loop.
+  static const Duration _scheduleTimeout = Duration(seconds: 5);
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -196,9 +211,18 @@ class NotificationService {
     final now = DateTime.now();
     final repeatSound = settings.repeatNotifications;
     int scheduled = 0;
+    final stopwatch = Stopwatch()..start();
 
     for (final day in days) {
       for (final prayer in day.prayers) {
+        if (scheduled >= _maxNotificationsToSchedule) {
+          debugPrint(
+            '[notif] reached cap ($_maxNotificationsToSchedule) '
+            'after ${stopwatch.elapsedMilliseconds}ms — stopping',
+          );
+          return;
+        }
+
         if (prayer.isDone) continue;
 
         final time = prayer.time;
@@ -217,6 +241,11 @@ class NotificationService {
             l10n: l10n,
           );
           scheduled++;
+          debugPrint(
+            '[notif] ($scheduled/$_maxNotificationsToSchedule) '
+            'scheduled ${prayer.name} @ $time '
+            '(${stopwatch.elapsedMilliseconds}ms)',
+          );
         } catch (e, st) {
           debugPrint(
             '[notif] FAILED to schedule ${prayer.name} at $time: $e\n$st',
@@ -225,7 +254,10 @@ class NotificationService {
       }
     }
 
-    debugPrint('[notif] scheduled $scheduled notifications');
+    debugPrint(
+      '[notif] done — scheduled $scheduled notifications '
+      'in ${stopwatch.elapsedMilliseconds}ms',
+    );
   }
 
   Future<void> _scheduleSingleNotification({
@@ -270,33 +302,40 @@ class NotificationService {
       ),
     );
 
+    // Try exact first, then fall back to inexact if the OS rejects it
+    // (Android 12+ without SCHEDULE_EXACT_ALARM granted).
     try {
-      await _plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzTime,
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      debugPrint('[notif] exact scheduled id=$id at $tzTime');
+      await _plugin
+          .zonedSchedule(
+            id,
+            title,
+            body,
+            tzTime,
+            details,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          )
+          .timeout(_scheduleTimeout);
+    } on TimeoutException {
+      debugPrint('[notif] exact zonedSchedule timed out for id=$id');
+      rethrow;
     } on PlatformException catch (e) {
       debugPrint('[notif] exact schedule failed ($e), falling back to inexact');
-      await _plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzTime,
-        details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      debugPrint('[notif] inexact scheduled id=$id at $tzTime');
+      await _plugin
+          .zonedSchedule(
+            id,
+            title,
+            body,
+            tzTime,
+            details,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          )
+          .timeout(_scheduleTimeout);
     }
   }
 

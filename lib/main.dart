@@ -83,8 +83,9 @@ void main() async {
 
   unawaited(_refreshLocationInBackground(settingsController));
 
-  await daysController.syncNotifications();
-
+  // 👇 Render the UI immediately. Notification scheduling used to be awaited
+  //    here and it blocked startup for 30–90 seconds when hundreds of
+  //    alarms had to be scheduled. Now we do it after the first frame.
   runApp(
     MultiProvider(
       providers: [
@@ -95,6 +96,12 @@ void main() async {
       child: const MyApp(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    debugPrint('[startup] kicking off notification sync (post-frame)');
+    // Fire-and-forget. Errors are logged inside syncNotifications.
+    daysController.syncNotifications();
+  });
 }
 
 Future<void> _refreshLocationInBackground(SettingsController settings) async {
