@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'package:pray/l10n/app_localizations.dart';
 import 'package:pray/model/storage/app_database.dart';
@@ -16,6 +17,7 @@ import 'package:pray/controller/settings_controller.dart';
 import 'package:pray/controller/user_state_controller.dart';
 import 'package:pray/controller/days_controller.dart';
 import 'package:pray/service/notification_service.dart';
+import 'package:pray/service/sticky_notification_worker.dart';
 import 'package:pray/view/theme/app_theme.dart';
 import 'package:pray/view/main_shell.dart';
 
@@ -83,9 +85,6 @@ void main() async {
 
   unawaited(_refreshLocationInBackground(settingsController));
 
-  // 👇 Render the UI immediately. Notification scheduling used to be awaited
-  //    here and it blocked startup for 30–90 seconds when hundreds of
-  //    alarms had to be scheduled. Now we do it after the first frame.
   runApp(
     MultiProvider(
       providers: [
@@ -97,10 +96,25 @@ void main() async {
     ),
   );
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    debugPrint('[startup] kicking off notification sync (post-frame)');
-    // Fire-and-forget. Errors are logged inside syncNotifications.
-    daysController.syncNotifications();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    debugPrint('[startup] post-frame work starting');
+
+    try {
+      await Workmanager().initialize(stickyNotificationWorkerDispatcher);
+      debugPrint('[startup] workmanager initialized');
+    } catch (e, st) {
+      debugPrint('[startup] workmanager init failed: $e\n$st');
+    }
+
+    await daysController.syncNotifications();
+
+    try {
+      await registerStickyNotificationWorker();
+    } catch (e, st) {
+      debugPrint('[startup] worker registration failed: $e\n$st');
+    }
+
+    debugPrint('[startup] post-frame work done');
   });
 }
 
@@ -126,7 +140,6 @@ Future<void> _refreshLocationInBackground(SettingsController settings) async {
       return;
     }
 
-    // Cached fix first — instant, no timeout risk.
     Position? position;
     try {
       position = await Geolocator.getLastKnownPosition();
@@ -138,7 +151,6 @@ Future<void> _refreshLocationInBackground(SettingsController settings) async {
       debugPrint('[location] getLastKnownPosition failed: $e');
     }
 
-    // Fall back to a live fix only if nothing is cached.
     if (position == null) {
       debugPrint('[location] no cached position, requesting live fix');
       try {
@@ -158,7 +170,7 @@ Future<void> _refreshLocationInBackground(SettingsController settings) async {
     }
 
     final current = settings.currentSettings;
-    const threshold = 0.001; // ~100 m
+    const threshold = 0.001;
     final moved =
         (current.latitude - position.latitude).abs() > threshold ||
         (current.longitude - position.longitude).abs() > threshold;

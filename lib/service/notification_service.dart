@@ -16,6 +16,7 @@ import 'package:pray/l10n/app_localizations_extension.dart';
 import 'package:pray/model/storage/app_database.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
+import 'package:pray/service/sticky_notification_worker.dart' as sticky;
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) async {
@@ -53,10 +54,6 @@ void notificationTapBackground(NotificationResponse response) async {
   }
 }
 
-/// Resolves the correct generated [AppLocalizations] instance for a locale
-/// name ('en' or 'ar'). Used outside of a widget tree (e.g. from the
-/// notification service) where `AppLocalizations.of(context)` isn't
-/// available.
 AppLocalizations _resolveL10n(String localeName) {
   try {
     return lookupAppLocalizations(Locale(localeName));
@@ -70,22 +67,10 @@ class NotificationService {
   NotificationService._();
 
   static const String _channelId = 'prayer_channel_v2';
-
   static const String _androidSound = 'adhan';
   static const String _iosSound = 'adhan.caf';
 
-  /// Hard cap on how many notifications we schedule per sync.
-  ///
-  /// The app reloads its notification schedule on every cold start and on
-  /// every resume, so we don't need to schedule the full 30-day window. 60
-  /// notifications ≈ 10 days of prayers at 6/day, which comfortably covers
-  /// the user until their next app open. This also keeps us well under
-  /// Android's per-app exact-alarm quota (Android 14+ rate-limits and
-  /// eventually rejects new alarms beyond a threshold).
   static const int _maxNotificationsToSchedule = 60;
-
-  /// Per-notification timeout. If a single native `zonedSchedule` call
-  /// hangs, we skip that one instead of blocking the whole loop.
   static const Duration _scheduleTimeout = Duration(seconds: 5);
 
   final FlutterLocalNotificationsPlugin _plugin =
@@ -99,7 +84,6 @@ class NotificationService {
   }) async {
     if (_initialized) return;
 
-    // ---- Timezone setup ----
     tz.initializeTimeZones();
     try {
       final String timeZoneName = await FlutterTimezone.getLocalTimezone();
@@ -110,10 +94,8 @@ class NotificationService {
       tz.setLocalLocation(tz.UTC);
     }
 
-    // ---- Localizations ----
     final l10n = _resolveL10n(localeName);
 
-    // ---- Init settings ----
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/launcher_icon',
     );
@@ -122,8 +104,6 @@ class NotificationService {
       DarwinNotificationCategory(
         'PRAYER_CATEGORY',
         actions: [
-          // No `foreground` option → the action is handled silently in the
-          // background without bringing the app to the foreground.
           DarwinNotificationAction.plain(
             'mark_done_action',
             l10n.notifMarkDone,
@@ -146,7 +126,6 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
-    // ---- Cold-launch via notification tap ----
     final launchDetails = await _plugin.getNotificationAppLaunchDetails();
     if (launchDetails != null &&
         launchDetails.didNotificationLaunchApp &&
@@ -155,7 +134,6 @@ class NotificationService {
       await onNotificationResponse(launchDetails.notificationResponse!);
     }
 
-    // ---- Android-specific setup ----
     final androidImplementation = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -213,6 +191,7 @@ class NotificationService {
     int scheduled = 0;
     final stopwatch = Stopwatch()..start();
 
+    outerLoop:
     for (final day in days) {
       for (final prayer in day.prayers) {
         if (scheduled >= _maxNotificationsToSchedule) {
@@ -220,7 +199,7 @@ class NotificationService {
             '[notif] reached cap ($_maxNotificationsToSchedule) '
             'after ${stopwatch.elapsedMilliseconds}ms — stopping',
           );
-          return;
+          break outerLoop;
         }
 
         if (prayer.isDone) continue;
@@ -258,6 +237,12 @@ class NotificationService {
       '[notif] done — scheduled $scheduled notifications '
       'in ${stopwatch.elapsedMilliseconds}ms',
     );
+
+    await sticky.ensureStickyVisible(
+      plugin: _plugin,
+      loadedDays: days,
+      settings: settings,
+    );
   }
 
   Future<void> _scheduleSingleNotification({
@@ -287,10 +272,6 @@ class NotificationService {
           AndroidNotificationAction(
             'mark_done_action',
             l10n.notifMarkDone,
-            // 👇 false = handle silently in the background, don't launch
-            //    the app. The action is delivered to
-            //    `notificationTapBackground` instead of the foreground
-            //    `onNotificationResponse` callback.
             showsUserInterface: false,
             cancelNotification: true,
           ),
@@ -302,8 +283,6 @@ class NotificationService {
       ),
     );
 
-    // Try exact first, then fall back to inexact if the OS rejects it
-    // (Android 12+ without SCHEDULE_EXACT_ALARM granted).
     try {
       await _plugin
           .zonedSchedule(
