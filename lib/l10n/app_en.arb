@@ -80,8 +80,16 @@
   "@notifTimeFor": {
     "placeholders": { "prayer": { "type": "String" } }
   },
-  "notifItIsTimeFor": "It is time for {prayer} prayer.",
-  "@notifItIsTimeFor": {
-    "placeholders": { "prayer": { "type": "String" } }
+    "notifItIsTimeFor": "It is time for {prayer} prayer.",
+    "@notifItIsTimeFor": {
+      "placeholders": { "prayer": { "type": "String" } }
+    },
+
+    "resetCounter": "Reset counter",
+    "resetCounterDialogTitle": "Reset counter?",
+    "resetCounterDialogMessage": "This will set the optional prayer counter back to 0.",
+    "resetCounterDialogConfirm": "Reset",
+    "resetCounterDialogCancel": "Cancel",
+    "navPrayers": "Prayers",
+    "navCalendar": "Calendar"
   }
-}

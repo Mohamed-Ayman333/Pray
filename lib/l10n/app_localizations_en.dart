@@ -212,4 +212,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifItIsTimeFor(String prayer) {
     return 'It is time for $prayer prayer.';
   }
+
+  @override
+  String get resetCounter => 'Reset counter';
+
+  @override
+  String get resetCounterDialogTitle => 'Reset counter?';
+
+  @override
+  String get resetCounterDialogMessage =>
+      'This will set the optional prayer counter back to 0.';
+
+  @override
+  String get resetCounterDialogConfirm => 'Reset';
+
+  @override
+  String get resetCounterDialogCancel => 'Cancel';
+
+  @override
+  String get navPrayers => 'Prayers';
+
+  @override
+  String get navCalendar => 'Calendar';
 }

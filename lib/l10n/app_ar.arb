@@ -1,7 +1,7 @@
 {
   "@@locale": "ar",
 
-  "appTitle": "صلّي",
+  "appTitle": "صلِّ",
 
   "comingNext": "الصلاة القادمة",
   "countdown": "الوقت المتبقي",
@@ -80,8 +80,17 @@
   "@notifTimeFor": {
     "placeholders": { "prayer": { "type": "String" } }
   },
-  "notifItIsTimeFor": "حان الآن وقت صلاة {prayer}.",
-  "@notifItIsTimeFor": {
-    "placeholders": { "prayer": { "type": "String" } }
+    "notifItIsTimeFor": "حان الآن وقت صلاة {prayer}.",
+    "@notifItIsTimeFor": {
+      "placeholders": { "prayer": { "type": "String" } }
+    },
+
+    "navPrayers": "الصلوات",
+    "navCalendar": "التقويم",
+
+    "resetCounter": "إعادة تعيين العداد",
+    "resetCounterDialogTitle": "إعادة تعيين العداد؟",
+    "resetCounterDialogMessage": "سيتم إعادة تعيين عداد الصلوات النافلة إلى ٠.",
+    "resetCounterDialogConfirm": "إعادة تعيين",
+    "resetCounterDialogCancel": "إلغاء"
   }
-}

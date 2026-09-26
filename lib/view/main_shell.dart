@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'calendar/calendar_page.dart';
 import 'home/home_page.dart';
 import 'settings/settings_page.dart';
@@ -19,6 +20,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     final List<Widget> pages = [
       const HomePage(),
@@ -54,21 +56,21 @@ class _MainShellState extends State<MainShell> {
                 });
               }
             },
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.mosque_outlined),
-                selectedIcon: Icon(Icons.mosque),
-                label: 'Prayers',
+                icon: const Icon(Icons.mosque_outlined),
+                selectedIcon: const Icon(Icons.mosque),
+                label: l10n.navPrayers,
               ),
               NavigationDestination(
-                icon: Icon(Icons.calendar_month_outlined),
-                selectedIcon: Icon(Icons.calendar_month),
-                label: 'Calendar',
+                icon: const Icon(Icons.calendar_month_outlined),
+                selectedIcon: const Icon(Icons.calendar_month),
+                label: l10n.navCalendar,
               ),
               NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings),
-                label: 'Settings',
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: l10n.settingsTitle,
               ),
             ],
           ),

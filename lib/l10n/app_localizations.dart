@@ -487,6 +487,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It is time for {prayer} prayer.'**
   String notifItIsTimeFor(String prayer);
+
+  /// No description provided for @resetCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset counter'**
+  String get resetCounter;
+
+  /// No description provided for @resetCounterDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset counter?'**
+  String get resetCounterDialogTitle;
+
+  /// No description provided for @resetCounterDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will set the optional prayer counter back to 0.'**
+  String get resetCounterDialogMessage;
+
+  /// No description provided for @resetCounterDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetCounterDialogConfirm;
+
+  /// No description provided for @resetCounterDialogCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get resetCounterDialogCancel;
+
+  /// No description provided for @navPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayers'**
+  String get navPrayers;
+
+  /// No description provided for @navCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get navCalendar;
 }
 
 class _AppLocalizationsDelegate

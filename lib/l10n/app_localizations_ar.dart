@@ -211,4 +211,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String notifItIsTimeFor(String prayer) {
     return 'حان الآن وقت صلاة $prayer.';
   }
+
+  @override
+  String get resetCounter => 'إعادة تعيين العداد';
+
+  @override
+  String get resetCounterDialogTitle => 'إعادة تعيين العداد؟';
+
+  @override
+  String get resetCounterDialogMessage =>
+      'سيتم إعادة تعيين عداد الصلوات النافلة إلى ٠.';
+
+  @override
+  String get resetCounterDialogConfirm => 'إعادة تعيين';
+
+  @override
+  String get resetCounterDialogCancel => 'إلغاء';
+
+  @override
+  String get navPrayers => 'الصلوات';
+
+  @override
+  String get navCalendar => 'التقويم';
 }
