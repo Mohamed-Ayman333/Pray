@@ -17,17 +17,29 @@ import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/prayer.dart';
 import 'package:pray/model/types/settings.dart';
 
-/// Reserved notification ID for the "currently pending prayer" sticky.
-///
-/// Picked well outside the 0..59 range used by the scheduled prayer
-/// notifications, so it can never collide with a future-scheduled reminder.
-/// The app also cancels this ID whenever it re-syncs, so the state stays
-/// consistent across app launches.
-const int stickyRepostId = 999999;
-
 const String _channelId = 'prayer_channel_v2';
 const String _androidSound = 'adhan';
 const String _workerTaskName = 'stickyNotificationCheck';
+
+/// Deterministic notification ID derived from the payload.
+///
+/// Both the scheduled notification AND the sticky repost compute the same
+/// ID for the same prayer+date, so if both ever fire simultaneously the
+/// system REPLACES the older one instead of showing two copies.
+///
+/// Uses FNV-1a (32-bit) because `String.hashCode` is not guaranteed to be
+/// stable across Dart runtimes/isolates, which we rely on since the worker
+/// runs in a separate isolate from the foreground app.
+int notificationIdForPayload(String payload) {
+  var hash = 0x811C9DC5;
+  for (var i = 0; i < payload.length; i++) {
+    hash ^= payload.codeUnitAt(i);
+    hash = (hash * 0x01000193) & 0xFFFFFFFF;
+  }
+  // Mask to 31 bits so the ID is always positive — Android rejects negative
+  // notification IDs.
+  return hash & 0x7FFFFFFF;
+}
 
 /// WorkManager background dispatcher. Must be a top-level function and
 /// annotated with @pragma('vm:entry-point') so it survives AOT compilation.
@@ -40,9 +52,7 @@ void stickyNotificationWorkerDispatcher() {
     } catch (e, st) {
       debugPrint('[sticky-worker] error: $e\n$st');
     }
-    // Always return true — returning false would trigger WorkManager retry
-    // storms, and there's nothing productive about retrying a check that
-    // already fails gracefully.
+    // Always return true — returning false triggers WorkManager retries.
     return true;
   });
 }
@@ -50,8 +60,6 @@ void stickyNotificationWorkerDispatcher() {
 Future<void> _runWorker() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Timezones aren't strictly needed for the worker logic, but the
-  // notification plugin touches tz internally, so set it up to be safe.
   tz.initializeTimeZones();
   try {
     final name = await FlutterTimezone.getLocalTimezone();
@@ -60,7 +68,6 @@ Future<void> _runWorker() async {
     debugPrint('[sticky-worker] timezone setup failed: $e');
   }
 
-  // Isar may already be open if the main app is running in the same process.
   final isar = Isar.getInstance() ?? await AppDatabase.init();
   final core = await buildAppCore(isar);
   final settings = core.settingsController.currentSettings;
@@ -69,13 +76,10 @@ Future<void> _runWorker() async {
   final todayUtc = DateTime.utc(now.year, now.month, now.day);
   final today = await core.daysRepository.load(todayUtc);
 
-  // Prepare the notifications plugin for this isolate.
   final plugin = FlutterLocalNotificationsPlugin();
   const androidInit = AndroidInitializationSettings('@mipmap/launcher_icon');
   await plugin.initialize(const InitializationSettings(android: androidInit));
 
-  // Ensure the channel exists in case the app was never fully launched.
-  // createNotificationChannel is a no-op if the channel already exists.
   final androidImpl = plugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
@@ -100,26 +104,24 @@ Future<void> _runWorker() async {
   );
 }
 
-/// Shared logic used by both the background worker and the foreground
-/// notification sync flow.
+/// Ensures the *currently pending prayer* has a visible notification.
 ///
-/// Ensures that the *currently pending prayer* (the latest prayer today whose
-/// time has passed and hasn't been marked done) has a visible sticky
-/// notification. If no such prayer exists, cancels any lingering repost.
+/// "Currently pending" = the latest prayer today whose time has already
+/// passed and that hasn't been marked done. If it's already on screen
+/// (by ID), we do nothing. Otherwise we repost it with the same
+/// deterministic ID used when it was originally scheduled.
 Future<void> ensureStickyVisible({
   required FlutterLocalNotificationsPlugin plugin,
   required List<Day> loadedDays,
   required Settings settings,
 }) async {
-  // Feature off → make sure nothing lingers.
   if (!settings.notifications || !settings.stickyNotifications) {
-    await plugin.cancel(stickyRepostId);
+    debugPrint('[sticky] feature disabled — skipping');
     return;
   }
 
   final now = DateTime.now();
 
-  // Find today's Day entry. `d.date` is UTC midnight of the local day.
   Day? today;
   for (final d in loadedDays) {
     final dd = d.date;
@@ -134,8 +136,7 @@ Future<void> ensureStickyVisible({
     return;
   }
 
-  // Find the LATEST prayer that (a) has passed and (b) is not marked done.
-  // Sunrise is skipped because it doesn't get a sticky reminder by design.
+  // Find the LATEST prayer today that has passed and isn't done.
   Prayer? candidate;
   for (final prayer in today.prayers) {
     if (prayer.name.toLowerCase() == 'sunrise') continue;
@@ -144,30 +145,29 @@ Future<void> ensureStickyVisible({
     if (t == null || t.isAfter(now)) continue;
     candidate = prayer;
   }
-
   if (candidate == null) {
-    debugPrint('[sticky] no pending prayer — cancelling repost');
-    await plugin.cancel(stickyRepostId);
+    debugPrint('[sticky] no pending prayer — nothing to do');
     return;
   }
 
-  // Payload format must match the one used in NotificationService.
-  final expectedPayload = '${today.date?.toIso8601String()}|${candidate.name}';
+  final payload = '${today.date?.toIso8601String()}|${candidate.name}';
+  final id = notificationIdForPayload(payload);
 
-  // Is a notification already showing for this exact prayer?
+  // Check whether a notification with this exact ID is already showing.
   final androidImpl = plugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >();
   final active = await androidImpl?.getActiveNotifications() ?? const [];
-  final alreadyShowing = active.any((n) => n.payload == expectedPayload);
+  final alreadyShowing = active.any((n) => n.id == id);
 
   if (alreadyShowing) {
-    debugPrint('[sticky] ${candidate.name} still active — nothing to do');
+    debugPrint(
+      '[sticky] ${candidate.name} (id=$id) already active — skipping repost',
+    );
     return;
   }
 
-  // Resolve localizations from the user's chosen language.
   AppLocalizations l10n;
   try {
     l10n = lookupAppLocalizations(Locale(settings.language.name));
@@ -176,10 +176,10 @@ Future<void> ensureStickyVisible({
   }
 
   final displayName = l10n.prayerDisplayName(candidate.name);
-  debugPrint('[sticky] reposting sticky for ${candidate.name}');
+  debugPrint('[sticky] reposting ${candidate.name} (id=$id)');
 
   await plugin.show(
-    stickyRepostId,
+    id,
     l10n.notifTimeFor(displayName),
     l10n.notifItIsTimeFor(displayName),
     NotificationDetails(
@@ -205,7 +205,7 @@ Future<void> ensureStickyVisible({
         ],
       ),
     ),
-    payload: expectedPayload,
+    payload: payload,
   );
 }
 
