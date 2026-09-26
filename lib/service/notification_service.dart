@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show PlatformException;
@@ -15,6 +16,7 @@ import 'package:pray/l10n/app_localizations_extension.dart';
 import 'package:pray/model/storage/app_database.dart';
 import 'package:pray/model/types/day.dart';
 import 'package:pray/model/types/settings.dart';
+import 'package:pray/service/sticky_notification_worker.dart' as sticky;
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) async {
@@ -72,6 +74,20 @@ class NotificationService {
 
   static const String _androidSound = 'adhan';
   static const String _iosSound = 'adhan.caf';
+
+  /// Hard cap on how many notifications we schedule per sync.
+  ///
+  /// The app reloads its notification schedule on every cold start and on
+  /// every resume, so we don't need to schedule the full 30-day window. 60
+  /// notifications ≈ 10 days of prayers at 6/day, which comfortably covers
+  /// the user until their next app open. This also keeps us well under
+  /// Android's per-app exact-alarm quota (Android 14+ rate-limits and
+  /// eventually rejects new alarms beyond a threshold).
+  static const int _maxNotificationsToSchedule = 60;
+
+  /// Per-notification timeout. If a single native `zonedSchedule` call
+  /// hangs, we skip that one instead of blocking the whole loop.
+  static const Duration _scheduleTimeout = Duration(seconds: 5);
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -192,13 +208,22 @@ class NotificationService {
 
     final l10n = _resolveL10n(settings.language.name);
 
-    int notificationId = 0;
     final now = DateTime.now();
     final repeatSound = settings.repeatNotifications;
     int scheduled = 0;
+    final stopwatch = Stopwatch()..start();
 
+    outerLoop:
     for (final day in days) {
       for (final prayer in day.prayers) {
+        if (scheduled >= _maxNotificationsToSchedule) {
+          debugPrint(
+            '[notif] reached cap ($_maxNotificationsToSchedule) '
+            'after ${stopwatch.elapsedMilliseconds}ms — stopping',
+          );
+          break outerLoop;
+        }
+
         if (prayer.isDone) continue;
 
         final time = prayer.time;
@@ -206,17 +231,22 @@ class NotificationService {
 
         try {
           final displayName = l10n.prayerDisplayName(prayer.name);
+          final payload = '${day.date?.toIso8601String()}|${prayer.name}';
           await _scheduleSingleNotification(
-            id: notificationId++,
             title: l10n.notifTimeFor(displayName),
             body: l10n.notifItIsTimeFor(displayName),
             scheduledTime: time,
             settings: settings,
-            payload: '${day.date?.toIso8601String()}|${prayer.name}',
+            payload: payload,
             repeatSound: repeatSound,
             l10n: l10n,
           );
           scheduled++;
+          debugPrint(
+            '[notif] ($scheduled/$_maxNotificationsToSchedule) '
+            'scheduled ${prayer.name} @ $time '
+            '(${stopwatch.elapsedMilliseconds}ms)',
+          );
         } catch (e, st) {
           debugPrint(
             '[notif] FAILED to schedule ${prayer.name} at $time: $e\n$st',
@@ -225,11 +255,23 @@ class NotificationService {
       }
     }
 
-    debugPrint('[notif] scheduled $scheduled notifications');
+    debugPrint(
+      '[notif] done — scheduled $scheduled notifications '
+      'in ${stopwatch.elapsedMilliseconds}ms',
+    );
+
+    // 👇 Ensure the currently-pending prayer has a visible sticky
+    //    notification. Uses the same deterministic ID as the scheduled
+    //    notification, so if both ever fire simultaneously the second
+    //    post REPLACES the first instead of duplicating.
+    await sticky.ensureStickyVisible(
+      plugin: _plugin,
+      loadedDays: days,
+      settings: settings,
+    );
   }
 
   Future<void> _scheduleSingleNotification({
-    required int id,
     required String title,
     required String body,
     required DateTime scheduledTime,
@@ -238,6 +280,11 @@ class NotificationService {
     required AppLocalizations l10n,
     bool repeatSound = false,
   }) async {
+    // 👇 ID derived from the payload so the sticky repost uses the same ID
+    //    for the same prayer. This prevents duplicate notifications when
+    //    the sticky check runs moments after the scheduled one fires.
+    final id = sticky.notificationIdForPayload(payload);
+
     final tzTime = tz.TZDateTime.from(scheduledTime, tz.local);
 
     final details = NotificationDetails(
@@ -270,33 +317,40 @@ class NotificationService {
       ),
     );
 
+    // Try exact first, then fall back to inexact if the OS rejects it
+    // (Android 12+ without SCHEDULE_EXACT_ALARM granted).
     try {
-      await _plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzTime,
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      debugPrint('[notif] exact scheduled id=$id at $tzTime');
+      await _plugin
+          .zonedSchedule(
+            id,
+            title,
+            body,
+            tzTime,
+            details,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          )
+          .timeout(_scheduleTimeout);
+    } on TimeoutException {
+      debugPrint('[notif] exact zonedSchedule timed out for id=$id');
+      rethrow;
     } on PlatformException catch (e) {
       debugPrint('[notif] exact schedule failed ($e), falling back to inexact');
-      await _plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        tzTime,
-        details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: payload,
-      );
-      debugPrint('[notif] inexact scheduled id=$id at $tzTime');
+      await _plugin
+          .zonedSchedule(
+            id,
+            title,
+            body,
+            tzTime,
+            details,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          )
+          .timeout(_scheduleTimeout);
     }
   }
 
