@@ -68,6 +68,10 @@
   "calculationMethodTurkey": "رئاسة الشؤون الدينية التركية",
   "calculationMethodOther": "أخرى / مخصص",
 
+  "prayerTrackingSection": "تتبع الصلوات",
+  "trackPrayers": "تتبع الصلوات",
+  "trackPrayersSubtitle": "عند الإيقاف، يتم مسح الأيام السابقة وعرضها كمكتملة",
+
   "batteryPromptTitle": "حافظ على وصول التذكيرات في وقتها",
   "batteryPromptMessage": "قد يؤخر أندرويد الإشعارات أو يكتم صوتها أحيانًا عندما يكون التطبيق في الخلفية. لضمان وصول تذكيرات الصلاة في وقتها، اسمح لهذا التطبيق بتجاهل تحسينات البطارية.",
   "batteryPromptLater": "لاحقًا",

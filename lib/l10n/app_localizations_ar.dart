@@ -181,6 +181,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get calculationMethodOther => 'أخرى / مخصص';
 
   @override
+  String get prayerTrackingSection => 'تتبع الصلوات';
+
+  @override
+  String get trackPrayers => 'تتبع الصلوات';
+
+  @override
+  String get trackPrayersSubtitle =>
+      'عند الإيقاف، يتم مسح الأيام السابقة وعرضها كمكتملة';
+
+  @override
   String get batteryPromptTitle => 'حافظ على وصول التذكيرات في وقتها';
 
   @override

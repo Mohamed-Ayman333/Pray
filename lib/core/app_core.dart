@@ -42,6 +42,7 @@ Future<AppCore> buildAppCore(Isar isar) async {
   final daysRepository = DaysRepository(
     localStorage: localDaysStorage,
     cachingCalculatedStorage: cachingDaysStorage,
+    settingsController: settingsController,
   );
 
   return AppCore(

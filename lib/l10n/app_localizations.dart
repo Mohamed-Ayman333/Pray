@@ -434,6 +434,24 @@ abstract class AppLocalizations {
   /// **'Other / Custom'**
   String get calculationMethodOther;
 
+  /// No description provided for @prayerTrackingSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer Tracking'**
+  String get prayerTrackingSection;
+
+  /// No description provided for @trackPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Prayers'**
+  String get trackPrayers;
+
+  /// No description provided for @trackPrayersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, past days are cleared and shown as complete'**
+  String get trackPrayersSubtitle;
+
   /// No description provided for @batteryPromptTitle.
   ///
   /// In en, this message translates to:

@@ -181,6 +181,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calculationMethodOther => 'Other / Custom';
 
   @override
+  String get prayerTrackingSection => 'Prayer Tracking';
+
+  @override
+  String get trackPrayers => 'Track Prayers';
+
+  @override
+  String get trackPrayersSubtitle =>
+      'When off, past days are cleared and shown as complete';
+
+  @override
   String get batteryPromptTitle => 'Keep reminders on time';
 
   @override

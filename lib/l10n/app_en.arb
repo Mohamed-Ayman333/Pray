@@ -68,6 +68,10 @@
   "calculationMethodTurkey": "Diyanet İşleri Başkanlığı, Turkey",
   "calculationMethodOther": "Other / Custom",
 
+  "prayerTrackingSection": "Prayer Tracking",
+  "trackPrayers": "Track Prayers",
+  "trackPrayersSubtitle": "When off, past days are cleared and shown as complete",
+
   "batteryPromptTitle": "Keep reminders on time",
   "batteryPromptMessage": "Android sometimes delays or silences notifications when the app is in the background. To make sure you receive prayer reminders on time, allow this app to ignore battery optimizations.",
   "batteryPromptLater": "Later",

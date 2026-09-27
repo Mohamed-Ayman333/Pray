@@ -375,6 +375,20 @@ class SettingsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            SettingsSectionCard(
+              title: l10n.prayerTrackingSection,
+              icon: Icons.visibility_off_outlined,
+              children: [
+                SettingsSwitchTile(
+                  title: l10n.trackPrayers,
+                  subtitle: l10n.trackPrayersSubtitle,
+                  value: settingsController.trackPrayers,
+                  onChanged: (val) => settingsController.setTrackPrayers(val),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Section 3: Language
             SettingsSectionCard(
               title: l10n.languageLabel,

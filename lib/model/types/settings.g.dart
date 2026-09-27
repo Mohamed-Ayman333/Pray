@@ -74,6 +74,11 @@ const SettingsSchema = CollectionSchema(
       id: 10,
       name: r'stickyNotifications',
       type: IsarType.bool,
+    ),
+    r'trackPrayers': PropertySchema(
+      id: 11,
+      name: r'trackPrayers',
+      type: IsarType.bool,
     )
   },
   estimateSize: _settingsEstimateSize,
@@ -116,6 +121,7 @@ void _settingsSerialize(
   writer.writeBool(offsets[8], object.repeatNotifications);
   writer.writeBool(offsets[9], object.showSunnahPrayers);
   writer.writeBool(offsets[10], object.stickyNotifications);
+  writer.writeBool(offsets[11], object.trackPrayers);
 }
 
 Settings _settingsDeserialize(
@@ -142,6 +148,7 @@ Settings _settingsDeserialize(
     repeatNotifications: reader.readBoolOrNull(offsets[8]) ?? false,
     showSunnahPrayers: reader.readBoolOrNull(offsets[9]) ?? false,
     stickyNotifications: reader.readBoolOrNull(offsets[10]) ?? false,
+    trackPrayers: reader.readBoolOrNull(offsets[11]) ?? true,
   );
   object.id = id;
   return object;
@@ -180,6 +187,8 @@ P _settingsDeserializeProp<P>(
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 10:
       return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 11:
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -764,6 +773,16 @@ extension SettingsQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition> trackPrayersEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'trackPrayers',
+        value: value,
+      ));
+    });
+  }
 }
 
 extension SettingsQueryObject
@@ -907,6 +926,18 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
       sortByStickyNotificationsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stickyNotifications', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByTrackPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackPrayers', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByTrackPrayersDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackPrayers', Sort.desc);
     });
   }
 }
@@ -1061,6 +1092,18 @@ extension SettingsQuerySortThenBy
       return query.addSortBy(r'stickyNotifications', Sort.desc);
     });
   }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByTrackPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackPrayers', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByTrackPrayersDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'trackPrayers', Sort.desc);
+    });
+  }
 }
 
 extension SettingsQueryWhereDistinct
@@ -1129,6 +1172,12 @@ extension SettingsQueryWhereDistinct
   QueryBuilder<Settings, Settings, QDistinct> distinctByStickyNotifications() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'stickyNotifications');
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QDistinct> distinctByTrackPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'trackPrayers');
     });
   }
 }
@@ -1208,6 +1257,12 @@ extension SettingsQueryProperty
       return query.addPropertyName(r'stickyNotifications');
     });
   }
+
+  QueryBuilder<Settings, bool, QQueryOperations> trackPrayersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'trackPrayers');
+    });
+  }
 }
 
 // **************************************************************************
@@ -1220,6 +1275,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       stickyNotifications: json['stickyNotifications'] as bool? ?? false,
       repeatNotifications: json['repeatNotifications'] as bool? ?? false,
       showSunnahPrayers: json['showSunnahPrayers'] as bool? ?? false,
+      trackPrayers: json['trackPrayers'] as bool? ?? true,
       autoIncrementOptionalPrayerCounterBy:
           (json['autoIncrementOptionalPrayerCounterBy'] as num?)?.toInt() ?? 0,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 30.0444,
@@ -1240,6 +1296,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'stickyNotifications': instance.stickyNotifications,
       'repeatNotifications': instance.repeatNotifications,
       'showSunnahPrayers': instance.showSunnahPrayers,
+      'trackPrayers': instance.trackPrayers,
       'autoIncrementOptionalPrayerCounterBy':
           instance.autoIncrementOptionalPrayerCounterBy,
       'latitude': instance.latitude,

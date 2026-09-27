@@ -16,6 +16,7 @@ class Settings {
   bool stickyNotifications;
   bool repeatNotifications;
   bool showSunnahPrayers;
+  bool trackPrayers;
   int autoIncrementOptionalPrayerCounterBy;
 
   // Added dynamic location coordinates
@@ -37,6 +38,7 @@ class Settings {
     this.stickyNotifications = false,
     this.repeatNotifications = false,
     this.showSunnahPrayers = false,
+    this.trackPrayers = true,
     this.autoIncrementOptionalPrayerCounterBy = 0,
     this.latitude = 30.0444, // Default fallback (e.g., Cairo)
     this.longitude = 31.2357,

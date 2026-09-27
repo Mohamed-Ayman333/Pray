@@ -29,6 +29,7 @@ class SettingsController extends ChangeNotifier {
   int get autoIncrementOptionalPrayerCounterBy =>
       _currentSettings.autoIncrementOptionalPrayerCounterBy;
   bool get showSunnahPrayers => _currentSettings.showSunnahPrayers;
+  bool get trackPrayers => _currentSettings.trackPrayers;
 
   /// Loads persisted settings from local storage on app initialization
   Future<void> init() async {
@@ -72,6 +73,10 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> toggleRepeatNotifications(bool enabled) async {
     await _updateAndSave((s) => s.repeatNotifications = enabled);
+  }
+
+  Future<void> setTrackPrayers(bool enabled) async {
+    await _updateAndSave((s) => s.trackPrayers = enabled);
   }
 
   // --- STEPPERS & ADJUSTMENTS ---
