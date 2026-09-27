@@ -194,6 +194,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get batteryPromptAllow => 'السماح';
 
   @override
+  String get sunnahBeforeHeader => 'السنة القبلية';
+
+  @override
+  String get sunnahAfterHeader => 'السنة البعدية';
+
+  @override
+  String get prayerDhuha => 'الضحى';
+
+  @override
   String get sunnahDisplaySection => 'الصلوات النافلة';
 
   @override

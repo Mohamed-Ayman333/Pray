@@ -73,6 +73,10 @@
   "batteryPromptLater": "Later",
   "batteryPromptAllow": "Allow",
 
+  "sunnahBeforeHeader": "Sunnah Before",
+  "sunnahAfterHeader": "Sunnah After",
+  "prayerDhuha": "Dhuha",
+
   "sunnahDisplaySection": "Sunnah Prayers",
   "showSunnahPrayers": "Show Sunnah Prayers",
   "showSunnahPrayersSubtitle": "Display sunnah prayers in the daily view",

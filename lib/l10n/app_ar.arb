@@ -73,6 +73,10 @@
   "batteryPromptLater": "لاحقًا",
   "batteryPromptAllow": "السماح",
 
+  "sunnahBeforeHeader": "السنة القبلية",
+  "sunnahAfterHeader": "السنة البعدية",
+  "prayerDhuha": "الضحى",
+
   "sunnahDisplaySection": "الصلوات النافلة",
   "showSunnahPrayers": "إظهار الصلوات النافلة",
   "showSunnahPrayersSubtitle": "عرض الصلوات النافلة في العرض اليومي",

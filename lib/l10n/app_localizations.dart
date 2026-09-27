@@ -458,6 +458,24 @@ abstract class AppLocalizations {
   /// **'Allow'**
   String get batteryPromptAllow;
 
+  /// No description provided for @sunnahBeforeHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah Before'**
+  String get sunnahBeforeHeader;
+
+  /// No description provided for @sunnahAfterHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah After'**
+  String get sunnahAfterHeader;
+
+  /// No description provided for @prayerDhuha.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhuha'**
+  String get prayerDhuha;
+
   /// No description provided for @sunnahDisplaySection.
   ///
   /// In en, this message translates to:

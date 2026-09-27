@@ -194,6 +194,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batteryPromptAllow => 'Allow';
 
   @override
+  String get sunnahBeforeHeader => 'Sunnah Before';
+
+  @override
+  String get sunnahAfterHeader => 'Sunnah After';
+
+  @override
+  String get prayerDhuha => 'Dhuha';
+
+  @override
   String get sunnahDisplaySection => 'Sunnah Prayers';
 
   @override
