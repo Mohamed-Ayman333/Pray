@@ -15,13 +15,13 @@ class DaysList extends StatelessWidget {
   /// Hard-coded sunnah rak'ah counts per prayer: (before, after).
   /// Sunrise and Dhuha carry no sunnah. Values to be verified later.
   static const Map<String, (int, int)> _sunnahCounts = {
-    'Fajr': (2, 2),
+    'Fajr': (2, 0),
     'Sunrise': (0, 0),
     'Dhuha': (0, 0),
     'Dhuhr': (2, 2),
-    'Asr': (2, 2),
-    'Maghrib': (2, 2),
-    'Isha': (2, 2),
+    'Asr': (0, 0),
+    'Maghrib': (0, 2),
+    'Isha': (0, 2),
   };
 
   static const _headerStyle = TextStyle(
