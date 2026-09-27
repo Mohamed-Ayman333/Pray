@@ -490,9 +490,11 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                           fontSize: 14,
                           color: isFuture
                               ? theme.disabledColor
-                              : (missedCount > 0
-                                    ? colorScheme.error
-                                    : colorScheme.onSurface),
+                              : (isToday
+                                    ? colorScheme.secondary
+                                    : (missedCount > 0
+                                          ? colorScheme.error
+                                          : colorScheme.onSurface)),
                         ),
                       ),
                       const SizedBox(height: 4),
