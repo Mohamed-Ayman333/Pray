@@ -65,8 +65,13 @@ const SettingsSchema = CollectionSchema(
       name: r'repeatNotifications',
       type: IsarType.bool,
     ),
-    r'stickyNotifications': PropertySchema(
+    r'showSunnahPrayers': PropertySchema(
       id: 9,
+      name: r'showSunnahPrayers',
+      type: IsarType.bool,
+    ),
+    r'stickyNotifications': PropertySchema(
+      id: 10,
       name: r'stickyNotifications',
       type: IsarType.bool,
     )
@@ -109,7 +114,8 @@ void _settingsSerialize(
   writer.writeByte(offsets[6], object.madhab.index);
   writer.writeBool(offsets[7], object.notifications);
   writer.writeBool(offsets[8], object.repeatNotifications);
-  writer.writeBool(offsets[9], object.stickyNotifications);
+  writer.writeBool(offsets[9], object.showSunnahPrayers);
+  writer.writeBool(offsets[10], object.stickyNotifications);
 }
 
 Settings _settingsDeserialize(
@@ -134,7 +140,8 @@ Settings _settingsDeserialize(
         Madhab.shafi,
     notifications: reader.readBoolOrNull(offsets[7]) ?? false,
     repeatNotifications: reader.readBoolOrNull(offsets[8]) ?? false,
-    stickyNotifications: reader.readBoolOrNull(offsets[9]) ?? false,
+    showSunnahPrayers: reader.readBoolOrNull(offsets[9]) ?? false,
+    stickyNotifications: reader.readBoolOrNull(offsets[10]) ?? false,
   );
   object.id = id;
   return object;
@@ -170,6 +177,8 @@ P _settingsDeserializeProp<P>(
     case 8:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 9:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 10:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -737,6 +746,16 @@ extension SettingsQueryFilter
   }
 
   QueryBuilder<Settings, Settings, QAfterFilterCondition>
+      showSunnahPrayersEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showSunnahPrayers',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterFilterCondition>
       stickyNotificationsEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -863,6 +882,18 @@ extension SettingsQuerySortBy on QueryBuilder<Settings, Settings, QSortBy> {
       sortByRepeatNotificationsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'repeatNotifications', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByShowSunnahPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showSunnahPrayers', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> sortByShowSunnahPrayersDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showSunnahPrayers', Sort.desc);
     });
   }
 
@@ -1006,6 +1037,18 @@ extension SettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByShowSunnahPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showSunnahPrayers', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QAfterSortBy> thenByShowSunnahPrayersDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showSunnahPrayers', Sort.desc);
+    });
+  }
+
   QueryBuilder<Settings, Settings, QAfterSortBy> thenByStickyNotifications() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'stickyNotifications', Sort.asc);
@@ -1074,6 +1117,12 @@ extension SettingsQueryWhereDistinct
   QueryBuilder<Settings, Settings, QDistinct> distinctByRepeatNotifications() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'repeatNotifications');
+    });
+  }
+
+  QueryBuilder<Settings, Settings, QDistinct> distinctByShowSunnahPrayers() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showSunnahPrayers');
     });
   }
 
@@ -1148,6 +1197,12 @@ extension SettingsQueryProperty
     });
   }
 
+  QueryBuilder<Settings, bool, QQueryOperations> showSunnahPrayersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showSunnahPrayers');
+    });
+  }
+
   QueryBuilder<Settings, bool, QQueryOperations> stickyNotificationsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'stickyNotifications');
@@ -1164,6 +1219,7 @@ Settings _$SettingsFromJson(Map<String, dynamic> json) => Settings(
       notifications: json['notifications'] as bool? ?? false,
       stickyNotifications: json['stickyNotifications'] as bool? ?? false,
       repeatNotifications: json['repeatNotifications'] as bool? ?? false,
+      showSunnahPrayers: json['showSunnahPrayers'] as bool? ?? false,
       autoIncrementOptionalPrayerCounterBy:
           (json['autoIncrementOptionalPrayerCounterBy'] as num?)?.toInt() ?? 0,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 30.0444,
@@ -1183,6 +1239,7 @@ Map<String, dynamic> _$SettingsToJson(Settings instance) => <String, dynamic>{
       'notifications': instance.notifications,
       'stickyNotifications': instance.stickyNotifications,
       'repeatNotifications': instance.repeatNotifications,
+      'showSunnahPrayers': instance.showSunnahPrayers,
       'autoIncrementOptionalPrayerCounterBy':
           instance.autoIncrementOptionalPrayerCounterBy,
       'latitude': instance.latitude,

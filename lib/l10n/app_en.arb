@@ -73,6 +73,10 @@
   "batteryPromptLater": "Later",
   "batteryPromptAllow": "Allow",
 
+  "sunnahDisplaySection": "Sunnah Prayers",
+  "showSunnahPrayers": "Show Sunnah Prayers",
+  "showSunnahPrayersSubtitle": "Display sunnah prayers in the daily view",
+
   "notifChannelName": "Prayer Reminders",
   "notifChannelDescription": "Notifications for upcoming prayer times",
   "notifMarkDone": "Mark as Done",

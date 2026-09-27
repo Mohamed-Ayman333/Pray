@@ -458,6 +458,24 @@ abstract class AppLocalizations {
   /// **'Allow'**
   String get batteryPromptAllow;
 
+  /// No description provided for @sunnahDisplaySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah Prayers'**
+  String get sunnahDisplaySection;
+
+  /// No description provided for @showSunnahPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Sunnah Prayers'**
+  String get showSunnahPrayers;
+
+  /// No description provided for @showSunnahPrayersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Display sunnah prayers in the daily view'**
+  String get showSunnahPrayersSubtitle;
+
   /// No description provided for @notifChannelName.
   ///
   /// In en, this message translates to:

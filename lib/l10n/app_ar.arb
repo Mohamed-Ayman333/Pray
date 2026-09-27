@@ -73,6 +73,10 @@
   "batteryPromptLater": "لاحقًا",
   "batteryPromptAllow": "السماح",
 
+  "sunnahDisplaySection": "الصلوات النافلة",
+  "showSunnahPrayers": "إظهار الصلوات النافلة",
+  "showSunnahPrayersSubtitle": "عرض الصلوات النافلة في العرض اليومي",
+
   "notifChannelName": "تذكيرات الصلاة",
   "notifChannelDescription": "إشعارات لأوقات الصلاة القادمة",
   "notifMarkDone": "تحديد كمنتهية",

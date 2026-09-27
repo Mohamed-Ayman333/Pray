@@ -194,6 +194,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get batteryPromptAllow => 'السماح';
 
   @override
+  String get sunnahDisplaySection => 'الصلوات النافلة';
+
+  @override
+  String get showSunnahPrayers => 'إظهار الصلوات النافلة';
+
+  @override
+  String get showSunnahPrayersSubtitle => 'عرض الصلوات النافلة في العرض اليومي';
+
+  @override
   String get notifChannelName => 'تذكيرات الصلاة';
 
   @override

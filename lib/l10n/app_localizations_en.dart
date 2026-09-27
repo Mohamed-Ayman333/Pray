@@ -194,6 +194,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get batteryPromptAllow => 'Allow';
 
   @override
+  String get sunnahDisplaySection => 'Sunnah Prayers';
+
+  @override
+  String get showSunnahPrayers => 'Show Sunnah Prayers';
+
+  @override
+  String get showSunnahPrayersSubtitle =>
+      'Display sunnah prayers in the daily view';
+
+  @override
   String get notifChannelName => 'Prayer Reminders';
 
   @override

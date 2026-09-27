@@ -414,6 +414,21 @@ class SettingsPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            SettingsSectionCard(
+              title: l10n.sunnahDisplaySection,
+              icon: Icons.auto_awesome_rounded,
+              children: [
+                SettingsSwitchTile(
+                  title: l10n.showSunnahPrayers,
+                  subtitle: l10n.showSunnahPrayersSubtitle,
+                  value: settingsController.showSunnahPrayers,
+                  onChanged: (val) =>
+                      settingsController.toggleShowSunnahPrayers(val),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Section 5: Appearance & Theme
             SettingsSectionCard(
               title: l10n.appearanceAndTheme,
