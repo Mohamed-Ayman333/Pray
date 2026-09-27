@@ -64,13 +64,25 @@ class DaysRepository implements IDaysStorage {
   @override
   Future<Day?> load(DateTime date) async {
     final normalizedDate = _toNormalizedUtc(date);
+    final now = DateTime.now();
+    final today = DateTime.utc(now.year, now.month, now.day);
 
-    // 1. Past: Local ONLY
+    // 1. Past: local first, then backfill from the calculation cache.
     if (_isPast(normalizedDate)) {
-      return await _localStorage.load(normalizedDate);
+      final localDay = await _localStorage.load(normalizedDate);
+      if (localDay != null) return localDay;
+
+      // Day was computed but never committed. Persist it now so it has a
+      // real all-pending record instead of appearing as "fully completed".
+      final cachedDay = await _cachingCalculatedStorage.load(normalizedDate);
+      if (cachedDay != null) {
+        cachedDay.date = normalizedDate;
+        await _localStorage.save(cachedDay);
+      }
+      return cachedDay;
     }
 
-    // 2. Today & Future: Dynamic Calculation + Preserve User Progress
+    // 2. Today & Future: dynamic calculation + preserve user progress.
     final localDay = await _localStorage.load(normalizedDate);
     final calculatedDay = await _cachingCalculatedStorage.load(normalizedDate);
 
@@ -90,6 +102,11 @@ class DaysRepository implements IDaysStorage {
           calcPrayer.isDone = localDay.prayers[existingIndex].isDone;
         }
       }
+    } else if (normalizedDate.isAtSameMomentAs(today)) {
+      // First computation of today: commit immediately so that when the
+      // day rolls over it has a proper local record (all prayers pending),
+      // rather than looking falsely completed.
+      await _localStorage.save(calculatedDay);
     }
 
     return calculatedDay;
@@ -99,64 +116,53 @@ class DaysRepository implements IDaysStorage {
   Future<List<Day>> getInRange(DateTime startDate, DateTime endDate) async {
     final now = DateTime.now();
     final today = DateTime.utc(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
     final tomorrow = today.add(const Duration(days: 1));
 
     final start = _toNormalizedUtc(startDate);
     final end = _toNormalizedUtc(endDate);
 
     if (end.isBefore(today)) {
-      return await _localStorage.getInRange(start, end);
+      return _loadDayByDay(start, end);
     }
 
     if (start.isAtSameMomentAs(today) && end.isAtSameMomentAs(today)) {
-      return await _fetchTodayRange(today);
+      return _loadDayByDay(today, today);
     }
 
     if (start.isAfter(today)) {
-      final List<Day> futureDays = [];
-      var current = start;
-      while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-        final loaded = await load(current);
-        if (loaded != null) futureDays.add(loaded);
-        current = current.add(const Duration(days: 1));
-      }
-      return futureDays;
+      return _loadDayByDay(start, end);
     }
 
     final List<Future<List<Day>>> requests = [];
 
     if (start.isBefore(today)) {
-      final pastEnd = end.isBefore(today) ? end : yesterday;
-      requests.add(_localStorage.getInRange(start, pastEnd));
+      final pastEnd = end.isBefore(today)
+          ? end
+          : today.subtract(const Duration(days: 1));
+      requests.add(_loadDayByDay(start, pastEnd));
     }
 
     if (!start.isAfter(today) && !end.isBefore(today)) {
-      requests.add(_fetchTodayRange(today));
+      requests.add(_loadDayByDay(today, today));
     }
 
     if (end.isAfter(today)) {
       final futureStart = start.isAfter(today) ? start : tomorrow;
-      requests.add(_fetchFutureRange(futureStart, end));
+      requests.add(_loadDayByDay(futureStart, end));
     }
 
     final results = await Future.wait(requests);
     return results.expand((list) => list).toList();
   }
 
-  Future<List<Day>> _fetchTodayRange(DateTime today) async {
-    final day = await load(today);
-    return day != null ? [day] : [];
-  }
-
-  Future<List<Day>> _fetchFutureRange(DateTime start, DateTime end) async {
-    final List<Day> futureDays = [];
+  Future<List<Day>> _loadDayByDay(DateTime start, DateTime end) async {
+    final List<Day> days = [];
     var current = start;
-    while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-      final loaded = await load(current);
-      if (loaded != null) futureDays.add(loaded);
+    while (!current.isAfter(end)) {
+      final day = await load(current);
+      if (day != null) days.add(day);
       current = current.add(const Duration(days: 1));
     }
-    return futureDays;
+    return days;
   }
 }
