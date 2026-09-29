@@ -54,6 +54,13 @@ void main() async {
       '[notif-handler] fired: actionId=${response.actionId} payload=${response.payload}',
     );
 
+    // Only the "Mark as Done" action mutates state. A plain body tap just
+    // brings the app to the foreground (Android does that for us), so we
+    // return without touching the day.
+    if (response.actionId != 'mark_done_action') {
+      return;
+    }
+
     if (response.payload != null) {
       final parts = response.payload!.split('|');
       if (parts.length == 2) {
