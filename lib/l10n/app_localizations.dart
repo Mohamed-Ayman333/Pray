@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @locationPermissionFallbackBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times are set for Cairo because you didn\'t grant location permission to the app.'**
+  String get locationPermissionFallbackBanner;
+
   /// No description provided for @calculationMethodMuslimWorldLeague.
   ///
   /// In en, this message translates to:

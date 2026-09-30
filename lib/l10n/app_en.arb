@@ -54,6 +54,8 @@
   "themeLight": "Light",
   "themeDark": "Dark",
 
+  "locationPermissionFallbackBanner": "Prayer times are set for Cairo because you didn't grant location permission to the app.",
+
   "calculationMethodMuslimWorldLeague": "Muslim World League",
   "calculationMethodEgyptian": "Egyptian General Authority",
   "calculationMethodKarachi": "University of Islamic Sciences, Karachi",

@@ -81,6 +81,8 @@
   "sunnahAfterHeader": "السنة البعدية",
   "prayerDhuha": "الضحى",
 
+  "locationPermissionFallbackBanner": "تم ضبط أوقات الصلاة على القاهرة لأنك لم تمنح التطبيق إذن الموقع.",
+
   "sunnahDisplaySection": "الصلوات النافلة",
   "showSunnahPrayers": "إظهار الصلوات النافلة",
   "showSunnahPrayersSubtitle": "عرض الصلوات النافلة في العرض اليومي",

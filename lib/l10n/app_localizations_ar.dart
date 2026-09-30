@@ -141,6 +141,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get themeDark => 'داكن';
 
   @override
+  String get locationPermissionFallbackBanner =>
+      'تم ضبط أوقات الصلاة على القاهرة لأنك لم تمنح التطبيق إذن الموقع.';
+
+  @override
   String get calculationMethodMuslimWorldLeague => 'رابطة العالم الإسلامي';
 
   @override

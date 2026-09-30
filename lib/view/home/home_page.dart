@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -26,13 +27,16 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isDayViewSelected = true;
   Timer? _countdownTimer;
+  bool _locationPermissionDenied = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkLocationPermission();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {});
     });
@@ -40,8 +44,26 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-check on resume so the banner disappears if the user grants
+    // permission from the system settings while the app is backgrounded.
+    if (state == AppLifecycleState.resumed) {
+      _checkLocationPermission();
+    }
+  }
+
+  Future<void> _checkLocationPermission() async {
+    final status = await Permission.location.status;
+    final denied = status.isDenied || status.isPermanentlyDenied;
+    if (mounted && denied != _locationPermissionDenied) {
+      setState(() => _locationPermissionDenied = denied);
+    }
   }
 
   @override
@@ -103,6 +125,14 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
+              if (_locationPermissionDenied) ...[
+                _LocationPermissionBanner(
+                  message: l10n.locationPermissionFallbackBanner,
+                  themeColors: themeColors,
+                  colorScheme: colorScheme,
+                ),
+                const SizedBox(height: 16),
+              ],
               HeaderCard(
                 nextPrayer: nextPrayer,
                 timeUntilNext: timeUntilNext,
@@ -130,6 +160,53 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LocationPermissionBanner extends StatelessWidget {
+  final String message;
+  final PrayerThemeColors themeColors;
+  final ColorScheme colorScheme;
+
+  const _LocationPermissionBanner({
+    required this.message,
+    required this.themeColors,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: themeColors.warningContainer ?? colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.secondary.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.location_off_rounded,
+            color: colorScheme.secondary,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

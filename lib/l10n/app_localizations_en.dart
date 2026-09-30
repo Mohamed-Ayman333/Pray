@@ -141,6 +141,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get locationPermissionFallbackBanner =>
+      'Prayer times are set for Cairo because you didn\'t grant location permission to the app.';
+
+  @override
   String get calculationMethodMuslimWorldLeague => 'Muslim World League';
 
   @override
