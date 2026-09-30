@@ -452,11 +452,17 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
               final isToday = cellDate.isAtSameMomentAs(today);
               final isFuture = cellDate.isAfter(today);
 
-              final missedCount = isFuture
+              // Whether we have any record for this day. Missing records
+              // for past days mean "unknown" — not "missed everything".
+              final hasData = daysController.getDay(cellDate) != null;
+
+              final missedCount = (isFuture || !hasData)
                   ? 0
                   : daysController.getMissedPrayersCount(cellDate);
 
-              final isCompleted = !isFuture && missedCount == 0;
+              // Only a past day with a record and zero pending counts as
+              // fully completed. Unknown past days are neutral.
+              final isCompleted = hasData && !isFuture && missedCount == 0;
 
               return InkWell(
                 onTap: () {
@@ -469,12 +475,15 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                   decoration: BoxDecoration(
                     color: isToday
                         ? colorScheme.secondaryContainer.withValues(alpha: 0.4)
-                        : (missedCount > 0
-                              ? (themeColors.errorContainer ??
-                                    colorScheme.errorContainer)
-                              : colorScheme.surfaceContainerHigh.withValues(
-                                  alpha: 0.5,
-                                )),
+                        : (!hasData && !isFuture
+                              ? colorScheme.surfaceContainerHigh.withValues(
+                                  alpha: 0.25,
+                                )
+                              : (missedCount > 0
+                                    ? (themeColors.errorContainer ??
+                                          colorScheme.errorContainer)
+                                    : colorScheme.surfaceContainerHigh
+                                          .withValues(alpha: 0.5))),
                     borderRadius: BorderRadius.circular(12),
                     border: isToday
                         ? Border.all(color: colorScheme.secondary, width: 2)
@@ -490,9 +499,13 @@ class PrayerCalendarPageState extends State<PrayerCalendarPage> {
                           fontSize: 14,
                           color: isFuture
                               ? theme.disabledColor
-                              : (missedCount > 0
-                                    ? colorScheme.error
-                                    : colorScheme.onSurface),
+                              : (isToday
+                                    ? colorScheme.secondary
+                                    : (!hasData
+                                          ? theme.disabledColor
+                                          : (missedCount > 0
+                                                ? colorScheme.error
+                                                : colorScheme.onSurface))),
                         ),
                       ),
                       const SizedBox(height: 4),

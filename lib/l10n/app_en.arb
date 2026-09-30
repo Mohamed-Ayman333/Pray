@@ -54,6 +54,8 @@
   "themeLight": "Light",
   "themeDark": "Dark",
 
+  "locationPermissionFallbackBanner": "Prayer times are set for Cairo because you didn't grant location permission to the app.",
+
   "calculationMethodMuslimWorldLeague": "Muslim World League",
   "calculationMethodEgyptian": "Egyptian General Authority",
   "calculationMethodKarachi": "University of Islamic Sciences, Karachi",
@@ -68,10 +70,22 @@
   "calculationMethodTurkey": "Diyanet İşleri Başkanlığı, Turkey",
   "calculationMethodOther": "Other / Custom",
 
+  "prayerTrackingSection": "Prayer Tracking",
+  "trackPrayers": "Track Prayers",
+  "trackPrayersSubtitle": "When off, past days are cleared and shown as complete",
+
   "batteryPromptTitle": "Keep reminders on time",
   "batteryPromptMessage": "Android sometimes delays or silences notifications when the app is in the background. To make sure you receive prayer reminders on time, allow this app to ignore battery optimizations.",
   "batteryPromptLater": "Later",
   "batteryPromptAllow": "Allow",
+
+  "sunnahBeforeHeader": "Sunnah Before",
+  "sunnahAfterHeader": "Sunnah After",
+  "prayerDhuha": "Dhuha",
+
+  "sunnahDisplaySection": "Sunnah Prayers",
+  "showSunnahPrayers": "Show Sunnah Prayers",
+  "showSunnahPrayersSubtitle": "Display sunnah prayers in the daily view",
 
   "notifChannelName": "Prayer Reminders",
   "notifChannelDescription": "Notifications for upcoming prayer times",
@@ -80,8 +94,16 @@
   "@notifTimeFor": {
     "placeholders": { "prayer": { "type": "String" } }
   },
-  "notifItIsTimeFor": "It is time for {prayer} prayer.",
-  "@notifItIsTimeFor": {
-    "placeholders": { "prayer": { "type": "String" } }
+    "notifItIsTimeFor": "It is time for {prayer} prayer.",
+    "@notifItIsTimeFor": {
+      "placeholders": { "prayer": { "type": "String" } }
+    },
+
+    "resetCounter": "Reset counter",
+    "resetCounterDialogTitle": "Reset counter?",
+    "resetCounterDialogMessage": "This will set the optional prayer counter back to 0.",
+    "resetCounterDialogConfirm": "Reset",
+    "resetCounterDialogCancel": "Cancel",
+    "navPrayers": "Prayers",
+    "navCalendar": "Calendar"
   }
-}

@@ -356,6 +356,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @locationPermissionFallbackBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times are set for Cairo because you didn\'t grant location permission to the app.'**
+  String get locationPermissionFallbackBanner;
+
   /// No description provided for @calculationMethodMuslimWorldLeague.
   ///
   /// In en, this message translates to:
@@ -434,6 +440,24 @@ abstract class AppLocalizations {
   /// **'Other / Custom'**
   String get calculationMethodOther;
 
+  /// No description provided for @prayerTrackingSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer Tracking'**
+  String get prayerTrackingSection;
+
+  /// No description provided for @trackPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Prayers'**
+  String get trackPrayers;
+
+  /// No description provided for @trackPrayersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When off, past days are cleared and shown as complete'**
+  String get trackPrayersSubtitle;
+
   /// No description provided for @batteryPromptTitle.
   ///
   /// In en, this message translates to:
@@ -457,6 +481,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow'**
   String get batteryPromptAllow;
+
+  /// No description provided for @sunnahBeforeHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah Before'**
+  String get sunnahBeforeHeader;
+
+  /// No description provided for @sunnahAfterHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah After'**
+  String get sunnahAfterHeader;
+
+  /// No description provided for @prayerDhuha.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhuha'**
+  String get prayerDhuha;
+
+  /// No description provided for @sunnahDisplaySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunnah Prayers'**
+  String get sunnahDisplaySection;
+
+  /// No description provided for @showSunnahPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Sunnah Prayers'**
+  String get showSunnahPrayers;
+
+  /// No description provided for @showSunnahPrayersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Display sunnah prayers in the daily view'**
+  String get showSunnahPrayersSubtitle;
 
   /// No description provided for @notifChannelName.
   ///
@@ -487,6 +547,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It is time for {prayer} prayer.'**
   String notifItIsTimeFor(String prayer);
+
+  /// No description provided for @resetCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset counter'**
+  String get resetCounter;
+
+  /// No description provided for @resetCounterDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset counter?'**
+  String get resetCounterDialogTitle;
+
+  /// No description provided for @resetCounterDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This will set the optional prayer counter back to 0.'**
+  String get resetCounterDialogMessage;
+
+  /// No description provided for @resetCounterDialogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetCounterDialogConfirm;
+
+  /// No description provided for @resetCounterDialogCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get resetCounterDialogCancel;
+
+  /// No description provided for @navPrayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayers'**
+  String get navPrayers;
+
+  /// No description provided for @navCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get navCalendar;
 }
 
 class _AppLocalizationsDelegate

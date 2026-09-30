@@ -1,15 +1,19 @@
 import 'package:pray/model/storage/i_days_storage.dart';
 import 'package:pray/model/types/day.dart';
+import 'package:pray/controller/settings_controller.dart';
 
 class DaysRepository implements IDaysStorage {
   final IDaysStorage _localStorage;
   final IDaysStorage _cachingCalculatedStorage;
+  final SettingsController _settingsController;
 
   DaysRepository({
     required IDaysStorage localStorage,
     required IDaysStorage cachingCalculatedStorage,
+    required SettingsController settingsController,
   }) : _localStorage = localStorage,
-       _cachingCalculatedStorage = cachingCalculatedStorage;
+       _cachingCalculatedStorage = cachingCalculatedStorage,
+       _settingsController = settingsController;
 
   DateTime _toNormalizedUtc(DateTime date) {
     final local = date.toLocal();
@@ -48,6 +52,18 @@ class DaysRepository implements IDaysStorage {
     if (day.date != null) {
       day.date = _toNormalizedUtc(day.date!);
     }
+
+    // Don't-track mode: never persist pending info for past days. Store
+    // an empty tombstone so the day reads back as a completed record
+    // without carrying any per-prayer state.
+    if (!_settingsController.trackPrayers &&
+        day.date != null &&
+        _isPast(day.date!)) {
+      final tombstone = Day(date: day.date, prayers: const [])..id = day.id;
+      await _localStorage.save(tombstone);
+      return;
+    }
+
     await _localStorage.save(day);
   }
 
@@ -58,19 +74,48 @@ class DaysRepository implements IDaysStorage {
         d.date = _toNormalizedUtc(d.date!);
       }
     }
+
+    if (!_settingsController.trackPrayers) {
+      final rewritten = days.map((d) {
+        if (d.date != null && _isPast(d.date!)) {
+          return Day(date: d.date, prayers: const [])..id = d.id;
+        }
+        return d;
+      }).toList();
+      await _localStorage.saveAll(rewritten);
+      return;
+    }
+
     await _localStorage.saveAll(days);
   }
 
   @override
   Future<Day?> load(DateTime date) async {
     final normalizedDate = _toNormalizedUtc(date);
+    final now = DateTime.now();
+    final today = DateTime.utc(now.year, now.month, now.day);
 
-    // 1. Past: Local ONLY
+    // 1. Past: local only. No record means "unknown", not "missed everything".
     if (_isPast(normalizedDate)) {
-      return await _localStorage.load(normalizedDate);
+      final localDay = await _localStorage.load(normalizedDate);
+
+      // Tracking disabled: every past day becomes a tombstone — a stored
+      // record with an empty prayer list. Catches rows written before the
+      // toggle was switched off; new writes are already tombstones via save().
+      if (!_settingsController.trackPrayers) {
+        if (localDay != null && localDay.prayers.isEmpty) {
+          return localDay;
+        }
+        final tombstone = Day(date: normalizedDate, prayers: const []);
+        if (localDay != null) tombstone.id = localDay.id;
+        await _localStorage.save(tombstone);
+        return tombstone;
+      }
+
+      return localDay;
     }
 
-    // 2. Today & Future: Dynamic Calculation + Preserve User Progress
+    // 2. Today & Future: unchanged.
     final localDay = await _localStorage.load(normalizedDate);
     final calculatedDay = await _cachingCalculatedStorage.load(normalizedDate);
 
@@ -90,6 +135,8 @@ class DaysRepository implements IDaysStorage {
           calcPrayer.isDone = localDay.prayers[existingIndex].isDone;
         }
       }
+    } else if (normalizedDate.isAtSameMomentAs(today)) {
+      await _localStorage.save(calculatedDay);
     }
 
     return calculatedDay;
@@ -105,30 +152,27 @@ class DaysRepository implements IDaysStorage {
     final start = _toNormalizedUtc(startDate);
     final end = _toNormalizedUtc(endDate);
 
+    // Pure past.
     if (end.isBefore(today)) {
-      return await _localStorage.getInRange(start, end);
+      return await _pastRange(start, end);
     }
 
+    // Today only.
     if (start.isAtSameMomentAs(today) && end.isAtSameMomentAs(today)) {
       return await _fetchTodayRange(today);
     }
 
+    // Pure future.
     if (start.isAfter(today)) {
-      final List<Day> futureDays = [];
-      var current = start;
-      while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-        final loaded = await load(current);
-        if (loaded != null) futureDays.add(loaded);
-        current = current.add(const Duration(days: 1));
-      }
-      return futureDays;
+      return await _fetchFutureRange(start, end);
     }
 
+    // Mixed: fan out into past / today / future slices.
     final List<Future<List<Day>>> requests = [];
 
     if (start.isBefore(today)) {
       final pastEnd = end.isBefore(today) ? end : yesterday;
-      requests.add(_localStorage.getInRange(start, pastEnd));
+      requests.add(_pastRange(start, pastEnd));
     }
 
     if (!start.isAfter(today) && !end.isBefore(today)) {
@@ -142,6 +186,47 @@ class DaysRepository implements IDaysStorage {
 
     final results = await Future.wait(requests);
     return results.expand((list) => list).toList();
+  }
+
+  /// Loads past days, honoring don't-track mode. When tracking is off,
+  /// every day in the range is returned as an empty tombstone, and any
+  /// stored row that still carries pending prayers is overwritten so the
+  /// state survives across sessions.
+  Future<List<Day>> _pastRange(DateTime start, DateTime end) async {
+    final stored = await _localStorage.getInRange(start, end);
+
+    if (_settingsController.trackPrayers) return stored;
+
+    // Index stored rows by date so we can preserve their ids on overwrite.
+    final byDate = <DateTime, Day>{
+      for (final d in stored)
+        if (d.date != null) _toNormalizedUtc(d.date!): d,
+    };
+
+    final fabricated = <Day>[];
+    final toPersist = <Day>[];
+    var current = start;
+
+    while (!current.isAfter(end)) {
+      final existing = byDate[current];
+      final tombstone = Day(date: current, prayers: const []);
+      if (existing != null) tombstone.id = existing.id;
+      fabricated.add(tombstone);
+
+      // Only write rows that don't yet exist or that still hold pending
+      // prayers. Already-empty rows are left alone.
+      if (existing == null || existing.prayers.isNotEmpty) {
+        toPersist.add(tombstone);
+      }
+
+      current = current.add(const Duration(days: 1));
+    }
+
+    if (toPersist.isNotEmpty) {
+      await _localStorage.saveAll(toPersist);
+    }
+
+    return fabricated;
   }
 
   Future<List<Day>> _fetchTodayRange(DateTime today) async {

@@ -22,7 +22,8 @@ class LocalDaysStorage implements IDaysStorage {
       final pending = originalDay.pendingPrayers;
 
       if (pending.isEmpty) {
-        return null;
+        return Day(date: originalDay.date, prayers: const [])
+          ..id = originalDay.id;
       }
 
       return Day(date: originalDay.date, prayers: List.from(pending))

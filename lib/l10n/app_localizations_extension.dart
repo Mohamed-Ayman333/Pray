@@ -9,6 +9,8 @@ extension AppLocalizationsX on AppLocalizations {
         return prayerFajr;
       case 'sunrise':
         return prayerSunrise;
+      case 'dhuha':
+        return prayerDhuha;
       case 'dhuhr':
         return prayerDhuhr;
       case 'asr':

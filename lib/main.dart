@@ -54,6 +54,13 @@ void main() async {
       '[notif-handler] fired: actionId=${response.actionId} payload=${response.payload}',
     );
 
+    // Only the "Mark as Done" action mutates state. A plain body tap just
+    // brings the app to the foreground (Android does that for us), so we
+    // return without touching the day.
+    if (response.actionId != 'mark_done_action') {
+      return;
+    }
+
     if (response.payload != null) {
       final parts = response.payload!.split('|');
       if (parts.length == 2) {
@@ -225,7 +232,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     _runAutoIncrement();
     _scheduleMidnightCheck();
-    _reloadToday();
+    _reloadAll();
     _refreshLocationOnResume();
   }
 
@@ -240,6 +247,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
     _midnightTimer = Timer(delay, () {
       _runAutoIncrement();
+      _reloadAll();
       _scheduleMidnightCheck();
     });
   }
@@ -253,10 +261,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _reloadToday() async {
+  /// Clears the in-memory day cache and refills it from storage. Needed
+  /// whenever a day boundary has been crossed, so past-day state is
+  /// re-evaluated through DaysRepository (which applies don't-track
+  /// tombstoning and unknown-day handling). Without this, days that
+  /// transitioned from today → past while the app stayed alive keep their
+  /// stale in-memory state until the next cold start.
+  Future<void> _reloadAll() async {
     if (!mounted) return;
     final daysController = context.read<DaysController>();
-    await daysController.loadDay(DateTime.now());
+    await daysController.clearAndReload();
   }
 
   Future<void> _refreshLocationOnResume() async {

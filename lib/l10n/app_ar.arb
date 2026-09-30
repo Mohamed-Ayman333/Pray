@@ -1,7 +1,7 @@
 {
   "@@locale": "ar",
 
-  "appTitle": "صلّي",
+  "appTitle": "صلِّ",
 
   "comingNext": "الصلاة القادمة",
   "countdown": "الوقت المتبقي",
@@ -68,10 +68,24 @@
   "calculationMethodTurkey": "رئاسة الشؤون الدينية التركية",
   "calculationMethodOther": "أخرى / مخصص",
 
+  "prayerTrackingSection": "تتبع الصلوات",
+  "trackPrayers": "تتبع الصلوات",
+  "trackPrayersSubtitle": "عند الإيقاف، يتم مسح الأيام السابقة وعرضها كمكتملة",
+
   "batteryPromptTitle": "حافظ على وصول التذكيرات في وقتها",
   "batteryPromptMessage": "قد يؤخر أندرويد الإشعارات أو يكتم صوتها أحيانًا عندما يكون التطبيق في الخلفية. لضمان وصول تذكيرات الصلاة في وقتها، اسمح لهذا التطبيق بتجاهل تحسينات البطارية.",
   "batteryPromptLater": "لاحقًا",
   "batteryPromptAllow": "السماح",
+
+  "sunnahBeforeHeader": "السنة القبلية",
+  "sunnahAfterHeader": "السنة البعدية",
+  "prayerDhuha": "الضحى",
+
+  "locationPermissionFallbackBanner": "تم ضبط أوقات الصلاة على القاهرة لأنك لم تمنح التطبيق إذن الموقع.",
+
+  "sunnahDisplaySection": "الصلوات النافلة",
+  "showSunnahPrayers": "إظهار الصلوات النافلة",
+  "showSunnahPrayersSubtitle": "عرض الصلوات النافلة في العرض اليومي",
 
   "notifChannelName": "تذكيرات الصلاة",
   "notifChannelDescription": "إشعارات لأوقات الصلاة القادمة",
@@ -80,8 +94,17 @@
   "@notifTimeFor": {
     "placeholders": { "prayer": { "type": "String" } }
   },
-  "notifItIsTimeFor": "حان الآن وقت صلاة {prayer}.",
-  "@notifItIsTimeFor": {
-    "placeholders": { "prayer": { "type": "String" } }
+    "notifItIsTimeFor": "حان الآن وقت صلاة {prayer}.",
+    "@notifItIsTimeFor": {
+      "placeholders": { "prayer": { "type": "String" } }
+    },
+
+    "navPrayers": "الصلوات",
+    "navCalendar": "التقويم",
+
+    "resetCounter": "إعادة تعيين العداد",
+    "resetCounterDialogTitle": "إعادة تعيين العداد؟",
+    "resetCounterDialogMessage": "سيتم إعادة تعيين عداد الصلوات النافلة إلى ٠.",
+    "resetCounterDialogConfirm": "إعادة تعيين",
+    "resetCounterDialogCancel": "إلغاء"
   }
-}

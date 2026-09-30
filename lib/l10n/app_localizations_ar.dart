@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'صلّي';
+  String get appTitle => 'صلِّ';
 
   @override
   String get comingNext => 'الصلاة القادمة';
@@ -141,6 +141,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get themeDark => 'داكن';
 
   @override
+  String get locationPermissionFallbackBanner =>
+      'تم ضبط أوقات الصلاة على القاهرة لأنك لم تمنح التطبيق إذن الموقع.';
+
+  @override
   String get calculationMethodMuslimWorldLeague => 'رابطة العالم الإسلامي';
 
   @override
@@ -181,6 +185,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get calculationMethodOther => 'أخرى / مخصص';
 
   @override
+  String get prayerTrackingSection => 'تتبع الصلوات';
+
+  @override
+  String get trackPrayers => 'تتبع الصلوات';
+
+  @override
+  String get trackPrayersSubtitle =>
+      'عند الإيقاف، يتم مسح الأيام السابقة وعرضها كمكتملة';
+
+  @override
   String get batteryPromptTitle => 'حافظ على وصول التذكيرات في وقتها';
 
   @override
@@ -192,6 +206,24 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get batteryPromptAllow => 'السماح';
+
+  @override
+  String get sunnahBeforeHeader => 'السنة القبلية';
+
+  @override
+  String get sunnahAfterHeader => 'السنة البعدية';
+
+  @override
+  String get prayerDhuha => 'الضحى';
+
+  @override
+  String get sunnahDisplaySection => 'الصلوات النافلة';
+
+  @override
+  String get showSunnahPrayers => 'إظهار الصلوات النافلة';
+
+  @override
+  String get showSunnahPrayersSubtitle => 'عرض الصلوات النافلة في العرض اليومي';
 
   @override
   String get notifChannelName => 'تذكيرات الصلاة';
@@ -211,4 +243,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String notifItIsTimeFor(String prayer) {
     return 'حان الآن وقت صلاة $prayer.';
   }
+
+  @override
+  String get resetCounter => 'إعادة تعيين العداد';
+
+  @override
+  String get resetCounterDialogTitle => 'إعادة تعيين العداد؟';
+
+  @override
+  String get resetCounterDialogMessage =>
+      'سيتم إعادة تعيين عداد الصلوات النافلة إلى ٠.';
+
+  @override
+  String get resetCounterDialogConfirm => 'إعادة تعيين';
+
+  @override
+  String get resetCounterDialogCancel => 'إلغاء';
+
+  @override
+  String get navPrayers => 'الصلوات';
+
+  @override
+  String get navCalendar => 'التقويم';
 }

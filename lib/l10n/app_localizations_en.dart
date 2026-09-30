@@ -141,6 +141,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get locationPermissionFallbackBanner =>
+      'Prayer times are set for Cairo because you didn\'t grant location permission to the app.';
+
+  @override
   String get calculationMethodMuslimWorldLeague => 'Muslim World League';
 
   @override
@@ -181,6 +185,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calculationMethodOther => 'Other / Custom';
 
   @override
+  String get prayerTrackingSection => 'Prayer Tracking';
+
+  @override
+  String get trackPrayers => 'Track Prayers';
+
+  @override
+  String get trackPrayersSubtitle =>
+      'When off, past days are cleared and shown as complete';
+
+  @override
   String get batteryPromptTitle => 'Keep reminders on time';
 
   @override
@@ -192,6 +206,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get batteryPromptAllow => 'Allow';
+
+  @override
+  String get sunnahBeforeHeader => 'Sunnah Before';
+
+  @override
+  String get sunnahAfterHeader => 'Sunnah After';
+
+  @override
+  String get prayerDhuha => 'Dhuha';
+
+  @override
+  String get sunnahDisplaySection => 'Sunnah Prayers';
+
+  @override
+  String get showSunnahPrayers => 'Show Sunnah Prayers';
+
+  @override
+  String get showSunnahPrayersSubtitle =>
+      'Display sunnah prayers in the daily view';
 
   @override
   String get notifChannelName => 'Prayer Reminders';
@@ -212,4 +245,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifItIsTimeFor(String prayer) {
     return 'It is time for $prayer prayer.';
   }
+
+  @override
+  String get resetCounter => 'Reset counter';
+
+  @override
+  String get resetCounterDialogTitle => 'Reset counter?';
+
+  @override
+  String get resetCounterDialogMessage =>
+      'This will set the optional prayer counter back to 0.';
+
+  @override
+  String get resetCounterDialogConfirm => 'Reset';
+
+  @override
+  String get resetCounterDialogCancel => 'Cancel';
+
+  @override
+  String get navPrayers => 'Prayers';
+
+  @override
+  String get navCalendar => 'Calendar';
 }
