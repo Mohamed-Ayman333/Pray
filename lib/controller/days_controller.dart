@@ -41,9 +41,10 @@ class DaysController extends ChangeNotifier {
   }
 
   Future<void> clearAndReload() async {
-    _loadedDays.clear();
-    final now = DateTime.now();
-    await Future.wait([loadMonth(now), loadNext30Days()]);
+    final today = _normalizeDate(DateTime.now());
+    _loadedDays.removeWhere((date, _) => !date.isBefore(today));
+
+    await Future.wait([loadMonth(today), loadNext30Days()]);
     await syncNotifications();
   }
 
